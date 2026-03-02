@@ -30,7 +30,7 @@ class RequestHandler(http.server.BaseHTTPRequestHandler):
             self.wfile.write(b'{"msg": "Database error"}')
             self.wfile.flush()   
         except Exception as e:
-            print("Error", e)
+            print("Error:", e)
             self.send_response(500)
             self.send_header("Content-Type", "application/json")
             self.end_headers()

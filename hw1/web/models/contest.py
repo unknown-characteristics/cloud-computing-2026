@@ -16,7 +16,27 @@ class Contest:
     @staticmethod
     def get_lowercase_columns() -> set[str]:
         return ["id", "name", "difficulty", "solution", "start_time", "end_time", "status"]
-    
+
+    @staticmethod
+    def simplify_integrity_error_message(code, message):
+        if "C_CONTESTS_VALID_STATUS" in message and "parent key not found" in message:
+            return "Invalid status (must be 'active' or)"
+        elif "unique" in message and "NAME" in message:
+            return "Another contest has the same name"
+        elif "cannot insert NULL into" in message or "to NULL" in message:
+            if "NAME" in message:
+                return "Name may not be NULL"
+            elif "DIFFICULTY" in message:
+                return "Difficulty may not be NULL"
+            elif "SOLUTION" in message:
+                return "Solution may not be NULL"
+            elif "STATUS" in message:
+                return "Status may not be NULL"
+            else:
+                return "Cannot insert NULL"
+        else:
+            return "Unknown database error"
+
     def from_full_tuple(self, tuple):
         self.id = tuple[0]
         self.name = tuple[1]

@@ -1,4 +1,5 @@
 import json
+import oracledb
 
 from . import BaseController
 from models import prize, contest
@@ -117,9 +118,15 @@ class PrizesController(BaseController):
             if item == None:
                 self.simple_response_code(404)
                 return
-
-            for row in cursor.execute(f"select rownum as rn, {', '.join(prize.Prize.get_lowercase_columns())} from {prize.Prize.get_table_name()} where contest_id = :contest_id", {"contest_id": contest_id}):
-                out += [prize.Prize().from_full_tuple(row[1:])]
+            
+            sql = f"select {', '.join(prize.Prize.get_lowercase_columns())} from {prize.Prize.get_table_name()} where contest_id = :contest_id"
+            result = self.prepare_sql_pagination_filtering_or_bad_req(sql, query_dict, allowed_filter_cols=["initial_qty", "remaining_qty", "description", "estimated_value"], sort_cols=prize.Prize.get_lowercase_columns())
+            if result == None:
+                return
+            
+            (sql, params) = result
+            for row in cursor.execute(sql, params | {"contest_id": contest_id}):
+                out += [prize.Prize().from_full_tuple(row)]
         
         self.simple_response_code(200)
         self.handler.wfile.write(bytes(json.dumps(out, default=lambda x: x.as_dict()), "UTF-8"))
@@ -171,8 +178,15 @@ class PrizesController(BaseController):
         with DBConnection() as conn, conn.cursor() as cursor:
             id_var = cursor.var(int)
             params = {"contest_id": contest_id, "initial_qty": req["initial_qty"], "remaining_qty": req["initial_qty"], "description": req["description"], "estimated_value": req["estimated_value"], "prize_id": id_var}
-            cursor.execute("INSERT INTO PRIZES(contest_id, initial_qty, remaining_qty, description, estimated_value) VALUES(:contest_id, :initial_qty, :remaining_qty, :description, :estimated_value) RETURNING prize_id INTO :prize_id", params)
-            conn.commit()
+            
+            try:
+                cursor.execute("INSERT INTO PRIZES(contest_id, initial_qty, remaining_qty, description, estimated_value) VALUES(:contest_id, :initial_qty, :remaining_qty, :description, :estimated_value) RETURNING prize_id INTO :prize_id", params)
+                conn.commit()
+            except oracledb.DatabaseError as e:
+                error = e.args[0]
+                self.simple_response_code(409)
+                self.output_error(Exception(prize.Prize.simplify_integrity_error_message(error.code, error.message)))
+                return
 
             item = get_by_id(prize.Prize, {"contest_id": contest_id, "prize_id": id_var.getvalue()[0]}, cursor)
 
@@ -236,7 +250,13 @@ class PrizesController(BaseController):
             return
         
         with DBConnection() as conn, conn.cursor() as cursor:
-            count = update_by_id(prize.Prize, {"contest_id": contest_id, "prize_id": prize_id}, req, cursor)
+            try:
+                count = update_by_id(prize.Prize, {"contest_id": contest_id, "prize_id": prize_id}, req, cursor)
+            except oracledb.DatabaseError as e:
+                error = e.args[0]
+                self.simple_response_code(409)
+                self.output_error(Exception(prize.Prize.simplify_integrity_error_message(error.code, error.message)))
+                return
 
             if count == 0:
                 self.simple_response_code(404)
@@ -286,7 +306,13 @@ class PrizesController(BaseController):
             return
         
         with DBConnection() as conn, conn.cursor() as cursor:
-            count = update_by_id(prize.Prize, {"contest_id": contest_id, "prize_id": prize_id}, req, cursor)
+            try:
+                count = update_by_id(prize.Prize, {"contest_id": contest_id, "prize_id": prize_id}, req, cursor)
+            except oracledb.DatabaseError as e:
+                error = e.args[0]
+                self.simple_response_code(409)
+                self.output_error(Exception(prize.Prize.simplify_integrity_error_message(error.code, error.message)))
+                return
 
             if count == 0:
                 self.simple_response_code(404)

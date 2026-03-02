@@ -2,6 +2,9 @@ import oracledb
 import os
 import json
 
+from dateutil import parser
+from datetime import timezone
+
 class ConnectionParameters:
     user: str
     password: str
@@ -67,3 +70,40 @@ def delete_by_id(cls, ids: dict[str, int], cursor: oracledb.Cursor):
     cursor.connection.commit()
 
     return cursor.rowcount
+
+def add_pagination_and_filtering_to_sql(sql: str, *, limit: int | None = None, offset: int | None = None, filter_cols: dict[str, str] | None = None, date_sort_cols: dict[str, tuple[bool, str]] | None = None, sort_cols: dict[str, bool] | None = None) -> tuple[str, dict]:
+    params = {}
+
+    sql = 'select * from (' + sql + ')'
+    where_text = ''
+    if filter_cols != None and len(filter_cols) > 0:
+        where_text = ' and '.join([f'{c} = :{c}' for c in filter_cols])
+        params = params | filter_cols
+
+    if date_sort_cols != None and len(date_sort_cols) > 0:
+        for col in date_sort_cols:
+            if col.endswith("_after"):
+                real_col_text = col[:-6]
+                where_text = where_text + f' and {real_col_text} >= :{real_col_text}'
+                params[real_col_text] = parser.isoparse(date_sort_cols[col]).astimezone(timezone.utc)
+            elif col.endswith("_before"):
+                real_col_text = col[:-7]
+                where_text = where_text + f' and {real_col_text} <= :{real_col_text}'
+                params[real_col_text] = parser.isoparse(date_sort_cols[col]).astimezone(timezone.utc)
+
+    if where_text != '':
+        sql = sql + ' where ' + where_text
+
+    if sort_cols != None and len(sort_cols) > 0 :
+        order_text = ', '.join([f'{c} {"asc" if asc else "desc"}' for c, asc in sort_cols.items()])
+        sql = sql + ' order by ' + order_text
+
+    if offset != None:
+        sql = sql + " OFFSET :offset ROWS"
+        params["offset"] = offset
+
+    if limit != None:
+        sql = sql + " FETCH NEXT :limit ROWS ONLY"
+        params["limit"] = limit
+
+    return (sql, params)

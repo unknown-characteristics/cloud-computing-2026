@@ -1,9 +1,11 @@
 import json
+import oracledb
 
 from . import BaseController
 from models import contestant, participation
 from util.database import DBConnection, get_by_id, update_by_id, delete_by_id
 from controllers.participations import ParticipationsController
+from controllers.awards import AwardsController
 
 class ContestantsController(BaseController):
     def route(self, path_parts: list[str], query_dict: dict[str, list[str]]):
@@ -18,7 +20,7 @@ class ContestantsController(BaseController):
                 self.simple_response_code(405)
         elif len(path_parts) == 1:
             # path is /contestants/{id}
-            id = self.convert_numeric_or_bad_req(path_parts[0])
+            id = self.convert_numeric_or_code(path_parts[0])
             if id == None:
                 return
             
@@ -34,7 +36,7 @@ class ContestantsController(BaseController):
                 self.simple_response_code(405)
         elif len(path_parts) == 2:
             # path is /contestants/{id}/{something}
-            id = self.convert_numeric_or_bad_req(path_parts[0])
+            id = self.convert_numeric_or_code(path_parts[0])
             if id == None:
                 return
 
@@ -47,18 +49,18 @@ class ContestantsController(BaseController):
                     self.simple_response_code(405)
             elif path_parts[1] == "awards":
                 if command == "GET":
-                    self.get_awards(id)
+                    AwardsController(self.handler).get_awards(id, query_dict)
                 else:
                     self.simple_response_code(405)
             else:
                 self.simple_response_code(404)
         elif len(path_parts) == 3:
             # path is /contestants/{id}/something/{id}
-            id = self.convert_numeric_or_bad_req(path_parts[0])
+            id = self.convert_numeric_or_code(path_parts[0])
             if id == None:
                 return
             
-            inner_id = self.convert_numeric_or_bad_req(path_parts[2])
+            inner_id = self.convert_numeric_or_code(path_parts[2])
             if inner_id == None:
                 return
 
@@ -75,7 +77,7 @@ class ContestantsController(BaseController):
                     self.simple_response_code(405)
             elif path_parts[1] == "awards":
                 if command == "GET":
-                    self.get_single_award(id, inner_id)
+                    AwardsController(self.handler).get_single_award(id, inner_id)
                 else:
                     self.simple_response_code(405)
             else:
@@ -86,8 +88,14 @@ class ContestantsController(BaseController):
     def get_all_contestants(self, query_dict: dict[str, list[str]]):
         out = []
         with DBConnection() as conn, conn.cursor() as cursor:
-            for row in cursor.execute(f"select rownum as rn, {', '.join(contestant.Contestant.get_lowercase_columns())} from {contestant.Contestant.get_table_name()}"):
-                out += [contestant.Contestant().from_full_tuple(row[1:])]
+            sql = f"select {', '.join(contestant.Contestant.get_lowercase_columns())} from {contestant.Contestant.get_table_name()}"
+            result = self.prepare_sql_pagination_filtering_or_bad_req(sql, query_dict, allowed_filter_cols=["name", "email", "school"], sort_cols=contestant.Contestant.get_lowercase_columns())
+            if result == None:
+                return
+            
+            (sql, params) = result
+            for row in cursor.execute(sql, params):
+                out += [contestant.Contestant().from_full_tuple(row)]
         
         self.simple_response_code(200)
         self.handler.wfile.write(bytes(json.dumps(out, default=lambda x: x.as_dict()), "UTF-8"))
@@ -131,8 +139,16 @@ class ContestantsController(BaseController):
         with DBConnection() as conn, conn.cursor() as cursor:
             id_var = cursor.var(int)
             params = {"name": req["name"], "email": req["email"], "school": req["school"], "id": id_var}
-            cursor.execute("INSERT INTO CONTESTANTS(name, email, school) VALUES(:name, :email, :school) RETURNING id INTO :id", params)
-            conn.commit()
+            
+            try:
+                cursor.execute("INSERT INTO CONTESTANTS(name, email, school) VALUES(:name, :email, :school) RETURNING id INTO :id", params)
+                conn.commit()
+            except oracledb.DatabaseError as e:
+                print(e)
+                error = e.args[0]
+                self.simple_response_code(409)
+                self.output_error(Exception(contestant.Contestant.simplify_integrity_error_message(error.code, error.message)))
+                return
 
             item = get_by_id(contestant.Contestant, {"id": id_var.getvalue()[0]}, cursor)
 
@@ -188,7 +204,13 @@ class ContestantsController(BaseController):
             return
         
         with DBConnection() as conn, conn.cursor() as cursor:
-            count = update_by_id(contestant.Contestant, {"id": id}, req, cursor)
+            try:
+                count = update_by_id(contestant.Contestant, {"id": id}, req, cursor)
+            except oracledb.DatabaseError as e:
+                error = e.args[0]
+                self.simple_response_code(409)
+                self.output_error(Exception(contestant.Contestant.simplify_integrity_error_message(error.code, error.message)))
+                return
 
             if count == 0:
                 self.simple_response_code(404)
@@ -225,8 +247,14 @@ class ContestantsController(BaseController):
             return
         
         with DBConnection() as conn, conn.cursor() as cursor:
-            count = update_by_id(contestant.Contestant, {"id": id}, req, cursor)
-            
+            try:
+                count = update_by_id(contestant.Contestant, {"id": id}, req, cursor)
+            except oracledb.DatabaseError as e:
+                error = e.args[0]
+                self.simple_response_code(409)
+                self.output_error(Exception(contestant.Contestant.simplify_integrity_error_message(error.code, error.message)))
+                return
+
             if count == 0:
                 self.simple_response_code(404)
                 return
@@ -258,8 +286,14 @@ class ContestantsController(BaseController):
                 self.simple_response_code(404)
                 return
 
-            for row in cursor.execute(f"select rownum as rn, {', '.join(participation.Participation.get_lowercase_columns())} from {participation.Participation.get_table_name()} where contestant_id = :contestant_id", {"contestant_id": id}):
-                out += [participation.Participation().from_full_tuple(row[1:])]
+            sql = f"select {', '.join(participation.Participation.get_lowercase_columns())} from {participation.Participation.get_table_name()} where contestant_id = :contestant_id"
+            result = self.prepare_sql_pagination_filtering_or_bad_req(sql, query_dict, allowed_filter_cols=["answer"], date_sort_cols=["join_time_after", "join_time_before", "submission_time_after", "submission_time_before"], sort_cols=participation.Participation.get_lowercase_columns())
+            if result == None:
+                return
+            
+            (sql, params) = result
+            for row in cursor.execute(sql, params | {"contestant_id": id}):
+                out += [participation.Participation().from_full_tuple(row)]
         
         self.simple_response_code(200)
         self.handler.wfile.write(bytes(json.dumps(out, default=lambda x: x.as_dict()), "UTF-8"))
@@ -278,17 +312,17 @@ class ContestantsController(BaseController):
             self.output_error(Exception("Missing body"))
             return
         
-        if "contestant_id" not in req:
+        if "contest_id" not in req or req["contest_id"] == None:
             self.simple_response_code(400)
-            self.output_error(Exception("Missing contestant ID"))
+            self.output_error(Exception("Missing contest ID"))
             return
         if "answer" not in req:
             self.simple_response_code(400)
             self.output_error(Exception("Missing answer"))
             return
-        if "contest_id" in req and req["contest_id"] != id:
+        if "contestant_id" in req and req["contestant_id"] != id:
             self.simple_response_code(400)
-            self.output_error(Exception("Contest ID may not be different between path and request"))
+            self.output_error(Exception("Contestant ID may not be different between path and request"))
             return
         if "join_time" in req:
             self.simple_response_code(400)
@@ -305,9 +339,20 @@ class ContestantsController(BaseController):
             return
         
         with DBConnection() as conn, conn.cursor() as cursor:
+            item = get_by_id(contestant.Contestant, {"id": id}, cursor)
+            if item == None:
+                self.simple_response_code(404)
+                return
+
             params = {"contest_id": req["contest_id"], "contestant_id": id, "answer": req["answer"]}
-            cursor.execute("INSERT INTO SUBMISSIONS(contest_id, contestant_id, answer) VALUES(:contest_id, :contestant_id, :answer)", params)
-            conn.commit()
+            try:
+                cursor.execute("INSERT INTO SUBMISSIONS(contest_id, contestant_id, answer) VALUES(:contest_id, :contestant_id, :answer)", params)
+                conn.commit()
+            except oracledb.DatabaseError as e:
+                error = e.args[0]
+                self.simple_response_code(409)
+                self.output_error(Exception(participation.Participation.simplify_integrity_error_message(error.code, error.message)))
+                return
 
             item = get_by_id(participation.Participation, {"contest_id": req["contest_id"], "contestant_id": id}, cursor)
 

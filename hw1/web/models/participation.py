@@ -5,7 +5,7 @@ class Participation:
     contestant_id: int
     answer: str
     join_time: datetime.datetime
-    submission_time: datetime.datetime
+    submission_time: datetime.datetime | None
 
     @staticmethod
     def get_table_name() -> str:
@@ -15,6 +15,19 @@ class Participation:
     def get_lowercase_columns() -> set[str]:
         return ["contest_id", "contestant_id", "answer", "join_time", "submission_time"]
     
+    @staticmethod
+    def simplify_integrity_error_message(code, message):
+        if "C_SUBM_FK_CONTEST_ID" in message and "parent key not found" in message:
+            return "Contest ID was not found"
+        elif "C_SUBM_FK_CONTESTANT_ID" in message and "parent key not found" in message:
+            return "Contestant ID was not found"
+        elif "C_SUBM_PK_CONTEST_CONTESTANT_ID" in message:
+            return "Contestant is already participating in the contest"
+        elif "cannot insert NULL into" in message or "to NULL" in message:
+            return "ID may not be NULL"
+        else:
+            return "Unknown database error"
+
     def from_full_tuple(self, tuple):
         self.contest_id = tuple[0]
         self.contestant_id = tuple[1]
@@ -25,4 +38,4 @@ class Participation:
         return self
 
     def as_dict(self):
-        return {"contest_id": self.contest_id, "contestant_id": self.contestant_id, "answer": self.answer, "join_time": self.join_time.isoformat(), "submission_time": self.submission_time.isoformat()}
+        return {"contest_id": self.contest_id, "contestant_id": self.contestant_id, "answer": self.answer, "join_time": self.join_time.isoformat(), "submission_time": None if self.submission_time == None else self.submission_time.isoformat()}

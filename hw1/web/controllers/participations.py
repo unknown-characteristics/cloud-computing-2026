@@ -1,4 +1,5 @@
 import json
+import oracledb
 
 from . import BaseController
 from models import participation
@@ -160,7 +161,13 @@ class ParticipationsController(BaseController):
             return
         
         with DBConnection() as conn, conn.cursor() as cursor:
-            count = update_by_id(participation.Participation, {"contest_id": contest_id, "contestant_id": contestant_id}, req, cursor)
+            try:
+                count = update_by_id(participation.Participation, {"contest_id": contest_id, "contestant_id": contestant_id}, req, cursor)
+            except oracledb.DatabaseError as e:
+                error = e.args[0]
+                self.simple_response_code(409)
+                self.output_error(Exception(participation.Participation.simplify_integrity_error_message(error.code, error.message)))
+                return
 
             if count == 0:
                 self.simple_response_code(404)
@@ -210,7 +217,13 @@ class ParticipationsController(BaseController):
             return
         
         with DBConnection() as conn, conn.cursor() as cursor:
-            count = update_by_id(participation.Participation, {"contest_id": contest_id, "contestant_id": contestant_id}, req, cursor)
+            try:
+                count = update_by_id(participation.Participation, {"contest_id": contest_id, "contestant_id": contestant_id}, req, cursor)
+            except oracledb.DatabaseError as e:
+                error = e.args[0]
+                self.simple_response_code(409)
+                self.output_error(Exception(participation.Participation.simplify_integrity_error_message(error.code, error.message)))
+                return
 
             if count == 0:
                 self.simple_response_code(404)
