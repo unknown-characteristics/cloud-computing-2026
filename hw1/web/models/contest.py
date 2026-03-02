@@ -14,7 +14,7 @@ class Contest:
         return "CONTESTS"
 
     @staticmethod
-    def get_lowercase_columns() -> set[str]:
+    def get_lowercase_columns() -> list[str]:
         return ["id", "name", "difficulty", "solution", "start_time", "end_time", "status"]
 
     @staticmethod
@@ -34,6 +34,8 @@ class Contest:
                 return "Status may not be NULL"
             else:
                 return "Cannot insert NULL"
+        elif code == 20202:
+            return "Cannot modify contest after ending it"
         else:
             return "Unknown database error"
 

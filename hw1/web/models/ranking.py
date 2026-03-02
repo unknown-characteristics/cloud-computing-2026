@@ -7,6 +7,10 @@ class Ranking:
     submission_time: datetime.datetime
     award_id: int
 
+    @staticmethod
+    def get_lowercase_columns():
+        return ["rank", "contestant_id", "submission_time", "award_id"]
+
     def from_full_tuple(self, tuple):
         self.rank = tuple[0]
         self.contestant_id = tuple[1]

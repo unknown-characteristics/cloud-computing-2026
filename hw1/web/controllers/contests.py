@@ -136,10 +136,17 @@ class ContestsController(BaseController):
             self.simple_response_code(400)
             self.output_error(Exception("Missing name"))
             return
+
         if "difficulty" not in req:
             self.simple_response_code(400)
             self.output_error(Exception("Missing difficulty"))
             return
+        else:
+            req["difficulty"] = self.convert_numeric_or_code(req["difficulty"], 400)
+            if req["difficulty"] == None or not 0 <= req["difficulty"] <= 9:
+                self.output_error(Exception("Invalid difficulty"))
+                return
+
         if "solution" not in req:
             self.simple_response_code(400)
             self.output_error(Exception("Missing solution"))
@@ -221,6 +228,12 @@ class ContestsController(BaseController):
             self.simple_response_code(400)
             self.output_error(Exception("Missing difficulty"))
             return
+        else:
+            req["difficulty"] = self.convert_numeric_or_code(req["difficulty"], 400)
+            if req["difficulty"] == None or not 0 <= req["difficulty"] <= 9:
+                self.output_error(Exception("Invalid difficulty"))
+                return
+
         if "solution" not in req:
             self.simple_response_code(400)
             self.output_error(Exception("Missing solution"))
@@ -284,6 +297,13 @@ class ContestsController(BaseController):
             self.simple_response_code(400)
             self.output_error(Exception("ID may not be modified"))
             return
+
+        if "difficulty" in req:
+            req["difficulty"] = self.convert_numeric_or_code(req["difficulty"], 400)
+            if req["difficulty"] == None or not 0 <= req["difficulty"] <= 9:
+                self.output_error(Exception("Invalid difficulty"))
+                return
+
         if "start_time" in req:
             self.simple_response_code(400)
             self.output_error(Exception("Start time may not be modified"))
@@ -363,15 +383,21 @@ class ContestsController(BaseController):
             self.simple_response_code(400)
             self.output_error(Exception("Missing body"))
             return
-        
+        if "contest_id" in req:
+            req["contest_id"] = self.convert_numeric_or_code(req["contest_id"], 400)
+            if req["contest_id"] == None:
+                self.output_error(Exception("Invalid contest ID"))
+                return
+
+            if req["contest_id"] != id:
+                self.simple_response_code(400)
+                self.output_error(Exception("Contest ID may not be different between path and request"))
+                return
         if "contestant_id" not in req or req["contestant_id"] == None:
             self.simple_response_code(400)
             self.output_error(Exception("Missing contestant ID"))
             return
-        if "contest_id" in req and req["contest_id"] != id:
-            self.simple_response_code(400)
-            self.output_error(Exception("Contest ID may not be different between path and request"))
-            return
+
         if "answer" not in req:
             self.simple_response_code(400)
             self.output_error(Exception("Missing answer"))
@@ -429,8 +455,8 @@ class ContestsController(BaseController):
                 self.output_error(Exception("Leaderboard is only available after contest end"))
                 return
 
-            sql = f"select rownum as rn, contestant_id, submission_time, prize_id from (select s.contestant_id as contestant_id, s.submission_time as submission_time, a.prize_id as prize_id from SUBMISSIONS s LEFT JOIN AWARDS a ON s.contest_id = a.contest_id AND s.contestant_id = a.contestant_id where s.contest_id = :contest_id and s.answer = :solution order by s.submission_time asc)"
-            result = self.prepare_sql_pagination_filtering_or_bad_req(sql, query_dict, allowed_filter_cols=["initial_qty", "remaining_qty", "description", "estimated_value"], sort_cols=contest.Contest.get_lowercase_columns())
+            sql = f"select rownum as rank, contestant_id, submission_time, award_id from (select s.contestant_id as contestant_id, s.submission_time as submission_time, a.prize_id as award_id from SUBMISSIONS s LEFT JOIN AWARDS a ON s.contest_id = a.contest_id AND s.contestant_id = a.contestant_id where s.contest_id = :contest_id and s.answer = :solution order by s.submission_time asc)"
+            result = self.prepare_sql_pagination_filtering_or_bad_req(sql, query_dict, allowed_filter_cols=["rank", "contestant_id", "prize_id"], sort_cols=ranking.Ranking.get_lowercase_columns(), date_sort_cols=["submission_time_after", "submission_time_before"])
             if result == None:
                 return
             
@@ -454,7 +480,7 @@ class ContestsController(BaseController):
                 self.output_error(Exception("Leaderboard is only available after contest end"))
                 return
 
-            cursor.execute(f"select rownum as rn, contestant_id, submission_time, prize_id from (select s.contestant_id as contestant_id, s.submission_time as submission_time, a.prize_id as prize_id from SUBMISSIONS s LEFT JOIN AWARDS a ON s.contest_id = a.contest_id AND s.contestant_id = a.contestant_id where s.contest_id = :contest_id and s.answer = :solution order by s.submission_time asc) where contestant_id = :contestant_id", {"contest_id": id, "solution": item.solution, "contestant_id": contestant_id})
+            cursor.execute(f"select rownum as rank, contestant_id, submission_time, award_id from (select s.contestant_id as contestant_id, s.submission_time as submission_time, a.prize_id as award_id from SUBMISSIONS s LEFT JOIN AWARDS a ON s.contest_id = a.contest_id AND s.contestant_id = a.contestant_id where s.contest_id = :contest_id and s.answer = :solution order by s.submission_time asc) where contestant_id = :contestant_id", {"contest_id": id, "solution": item.solution, "contestant_id": contestant_id})
             row = cursor.fetchone()
             if row == None:
                 self.simple_response_code(404)

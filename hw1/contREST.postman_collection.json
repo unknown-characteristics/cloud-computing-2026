@@ -1,0 +1,1266 @@
+{
+  "info": {
+    "_postman_id": "d92dc8b4-47ea-4a7c-8cdf-901293d466bc",
+    "name": "contREST",
+    "description": "# contREST - API REST pentru concursuri",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "52798864",
+    "_collection_link": "https://go.postman.co/collection/52798864-d92dc8b4-47ea-4a7c-8cdf-901293d466bc?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "List contests - all",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"name\": \"concurs{{$randomInt}}\",\r\n    \"difficulty\": 2,\r\n    \"solution\": \"secret\"\r\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/contests",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contests"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List contests - pagination, filtering, sorting",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/contests?limit=5&offset=4&sort=-start_time&status=active",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contests"
+          ],
+          "query": [
+            {
+              "key": "limit",
+              "value": "5"
+            },
+            {
+              "key": "offset",
+              "value": "4"
+            },
+            {
+              "key": "sort",
+              "value": "-start_time"
+            },
+            {
+              "key": "status",
+              "value": "active"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List contests - single",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/contests/{{current_contest_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contests",
+            "{{current_contest_id}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create contest",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"name\": \"concurs{{$randomInt}}\",\r\n    \"difficulty\": 2,\r\n    \"solution\": \"secret\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/contests",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contests"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create contest - invalid",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"name\": \"concurs{{$randomInt}}\",\r\n    \"difficulty\": null,\r\n    \"solution\": \"secret\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/contests",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contests"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Replace contest",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"name\": \"concurs{{$randomInt}}\",\r\n    \"difficulty\": 2,\r\n    \"solution\": \"secret\",\r\n    \"status\": \"active\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/contests/{{current_contest_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contests",
+            "{{current_contest_id}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Modify contest - set status = ended",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"status\": \"ended\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/contests/{{current_contest_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contests",
+            "{{current_contest_id}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Modify contest - set status = active",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"status\": \"active\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/contests/{{current_contest_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contests",
+            "{{current_contest_id}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete contest",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/contests/{{current_contest_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contests",
+            "{{current_contest_id}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List contestants - all",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"name\": \"concurs{{$randomInt}}\",\r\n    \"difficulty\": 2,\r\n    \"solution\": \"secret\"\r\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/contestants",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contestants"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List contestants - pagination, filtering, sorting",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/contestants?limit=5&offset=4&sort=+name&school=uaic",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contestants"
+          ],
+          "query": [
+            {
+              "key": "limit",
+              "value": "5"
+            },
+            {
+              "key": "offset",
+              "value": "4"
+            },
+            {
+              "key": "sort",
+              "value": "+name"
+            },
+            {
+              "key": "school",
+              "value": "uaic"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List contestants - single",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/contestants/{{current_contestant_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contestants",
+            "{{current_contestant_id}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create contestant",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"name\": \"user{{$randomInt}}\",\r\n    \"email\": \"{{$randomEmail}}\",\r\n    \"school\": \"uaic\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/contestants",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contestants"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create contestant - invalid",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"name\": \"user{{$randomInt}}\",\r\n    \"email\": \"{{$randomEmail}}\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/contestants",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contestants"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Replace contestant",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"name\": \"user{{$randomInt}}\",\r\n    \"email\": \"{{$randomEmail}}\",\r\n    \"school\": \"unibuc\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/contestants/{{current_contestant_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contestants",
+            "{{current_contestant_id}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Modify contestant",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"school\": \"ubb\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/contestants/{{current_contestant_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contestants",
+            "{{current_contestant_id}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete contestant",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/contestants/{{current_contestant_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contestants",
+            "{{current_contestant_id}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List contest prizes - all",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/contests/{{current_contest_id}}/prizes",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contests",
+            "{{current_contest_id}}",
+            "prizes"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List contest prizes - pagination, filtering, sorting",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/contests/{{current_contest_id}}/prizes?limit=2&offset=1&initial_qty=3&sort=+remaining_qty",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contests",
+            "{{current_contest_id}}",
+            "prizes"
+          ],
+          "query": [
+            {
+              "key": "limit",
+              "value": "2"
+            },
+            {
+              "key": "offset",
+              "value": "1"
+            },
+            {
+              "key": "initial_qty",
+              "value": "3"
+            },
+            {
+              "key": "sort",
+              "value": "+remaining_qty"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List contest prizes - single",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/contests/{{current_contest_id}}/prizes/{{current_prize_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contests",
+            "{{current_contest_id}}",
+            "prizes",
+            "{{current_prize_id}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create contest prize",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"description\": \"{{$randomAdjective}}\",\r\n    \"estimated_value\": \"{{$randomInt}}\",\r\n    \"initial_qty\": 2\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/contests/{{current_contest_id}}/prizes",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contests",
+            "{{current_contest_id}}",
+            "prizes"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create contest prize - invalid",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"description\": \"{{$randomAdjective}}\",\r\n    \"estimated_value\": \"{{$randomInt}}\",\r\n    \"initial_qty\": -1\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/contests/{{current_contest_id}}/prizes",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contests",
+            "{{current_contest_id}}",
+            "prizes"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Replace contest prize",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"description\": \"{{$randomAdjective}}\",\r\n    \"estimated_value\": \"{{$randomInt}}\",\r\n    \"initial_qty\": 3\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/contests/{{current_contest_id}}/prizes/{{current_prize_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contests",
+            "{{current_contest_id}}",
+            "prizes",
+            "{{current_prize_id}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Modify contest prize",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"description\": \"{{$randomAdjective}}\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/contests/{{current_contest_id}}/prizes/{{current_prize_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contests",
+            "{{current_contest_id}}",
+            "prizes",
+            "{{current_prize_id}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete contest prize",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/contests/{{current_contest_id}}/prizes/{{current_prize_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contests",
+            "{{current_contest_id}}",
+            "prizes",
+            "{{current_prize_id}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List contest participations - all",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/contests/{{current_contest_id}}/participations",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contests",
+            "{{current_contest_id}}",
+            "participations"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List contest participations - pagination, filtering, sorting",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/contests/{{current_contest_id}}/participations?limit=1&offset=3&sort=+contestant_id&start_date_after={{current_start_date}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contests",
+            "{{current_contest_id}}",
+            "participations"
+          ],
+          "query": [
+            {
+              "key": "limit",
+              "value": "1"
+            },
+            {
+              "key": "offset",
+              "value": "3"
+            },
+            {
+              "key": "sort",
+              "value": "+contestant_id"
+            },
+            {
+              "key": "start_date_after",
+              "value": "{{current_start_date}}"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List contest participations - single",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/contests/{{current_contest_id}}/participations/{{current_contestant_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contests",
+            "{{current_contest_id}}",
+            "participations",
+            "{{current_contestant_id}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create contest participation",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"contestant_id\": \"{{current_contestant_id}}\",\r\n    \"answer\": null\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/contests/{{current_contest_id}}/participations",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contests",
+            "{{current_contest_id}}",
+            "participations"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Replace contest participation (answer only)",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"contestant_id\": \"{{current_contestant_id}}\",\r\n    \"answer\": \"secret\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/contests/{{current_contest_id}}/participations/{{current_contestant_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contests",
+            "{{current_contest_id}}",
+            "participations",
+            "{{current_contestant_id}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Modify contest participation (answer only)",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"answer\": \"abc\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/contests/{{current_contest_id}}/participations/{{current_contestant_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contests",
+            "{{current_contest_id}}",
+            "participations",
+            "{{current_contestant_id}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete contest participation",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/contests/{{current_contest_id}}/participations/{{current_contestant_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contests",
+            "{{current_contest_id}}",
+            "participations",
+            "{{current_contestant_id}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List contestant participations - all",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/contestants/{{current_contestant_id}}/participations",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contestants",
+            "{{current_contestant_id}}",
+            "participations"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List contestant participations - pagination, filtering, sorting",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/contestants/{{current_contestant_id}}/participations?limit=1&offset=3&sort=-contestant_id&end_date_before={{current_end_date}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contestants",
+            "{{current_contestant_id}}",
+            "participations"
+          ],
+          "query": [
+            {
+              "key": "limit",
+              "value": "1"
+            },
+            {
+              "key": "offset",
+              "value": "3"
+            },
+            {
+              "key": "sort",
+              "value": "-contestant_id"
+            },
+            {
+              "key": "end_date_before",
+              "value": "{{current_end_date}}"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List contestant participations - single",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/contestants/{{current_contestant_id}}/participations/{{current_contest_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contestants",
+            "{{current_contestant_id}}",
+            "participations",
+            "{{current_contest_id}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create contestant participation",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"contest_id\": \"{{current_contest_id}}\",\r\n    \"answer\": null\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/contestants/{{current_contestant_id}}/participations",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contestants",
+            "{{current_contestant_id}}",
+            "participations"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Replace contestant participation (answer only)",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"contest_id\": \"{{current_contest_id}}\",\r\n    \"answer\": \"def\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/contestants/{{current_contestant_id}}/participations/{{current_contest_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contestants",
+            "{{current_contestant_id}}",
+            "participations",
+            "{{current_contest_id}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Modify contestant participation (answer only)",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"answer\": \"hidden\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/contestants/{{current_contestant_id}}/participations/{{current_contest_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contestants",
+            "{{current_contestant_id}}",
+            "participations",
+            "{{current_contest_id}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Modify contestant participation (answer only) Copy",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/contestants/{{current_contestant_id}}/participations/{{current_contest_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contestants",
+            "{{current_contestant_id}}",
+            "participations",
+            "{{current_contest_id}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List contest leaderboard - all",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/contests/{{current_contest_id}}/leaderboard",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contests",
+            "{{current_contest_id}}",
+            "leaderboard"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List contest leaderboard - pagination, filtering, sorting",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/contests/{{current_contest_id}}/leaderboard?limit=3&offset=1&sort=-contestant_id&submission_time_after={{current_start_date}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contests",
+            "{{current_contest_id}}",
+            "leaderboard"
+          ],
+          "query": [
+            {
+              "key": "limit",
+              "value": "3"
+            },
+            {
+              "key": "offset",
+              "value": "1"
+            },
+            {
+              "key": "sort",
+              "value": "-contestant_id"
+            },
+            {
+              "key": "submission_time_after",
+              "value": "{{current_start_date}}"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List contest leaderboard - single",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/contests/{{current_contest_id}}/leaderboard/{{current_contestant_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contests",
+            "{{current_contest_id}}",
+            "leaderboard",
+            "{{current_contestant_id}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List contestant awards - all",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/contestants/{{current_contestant_id}}/awards",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contestants",
+            "{{current_contestant_id}}",
+            "awards"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List contestant awards - pagination, filtering, sorting",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/contestants/{{current_contestant_id}}/awards?limit=1&offset=1&prize_id=2&sort=+contest_id",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contestants",
+            "{{current_contestant_id}}",
+            "awards"
+          ],
+          "query": [
+            {
+              "key": "limit",
+              "value": "1"
+            },
+            {
+              "key": "offset",
+              "value": "1"
+            },
+            {
+              "key": "prize_id",
+              "value": "2"
+            },
+            {
+              "key": "sort",
+              "value": "+contest_id"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List contestant awards - single",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/contestants/{{current_contestant_id}}/awards/{{current_prize_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "contestants",
+            "{{current_contestant_id}}",
+            "awards",
+            "{{current_prize_id}}"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "localhost:10101"
+    },
+    {
+      "key": "current_contest_id",
+      "value": "10"
+    },
+    {
+      "key": "current_contestant_id",
+      "value": "9"
+    },
+    {
+      "key": "current_prize_id",
+      "value": "14"
+    },
+    {
+      "key": "possible_schools",
+      "value": "[\"uaic\", \"ubb\", \"unibuc\"]"
+    },
+    {
+      "key": "current_start_date",
+      "value": "2026-03-02T16:00:00"
+    },
+    {
+      "key": "current_end_date",
+      "value": "2026-03-02T22:00:00"
+    }
+  ]
+}

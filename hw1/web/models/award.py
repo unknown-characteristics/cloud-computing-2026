@@ -8,7 +8,7 @@ class Award:
         return "AWARDS"
 
     @staticmethod
-    def get_lowercase_columns() -> set[str]:
+    def get_lowercase_columns() -> list[str]:
         return ["contest_id", "prize_id", "contestant_id"]
     
     @staticmethod

@@ -6,6 +6,7 @@ from models import contestant, participation
 from util.database import DBConnection, get_by_id, update_by_id, delete_by_id
 from controllers.participations import ParticipationsController
 from controllers.awards import AwardsController
+from util.other import is_valid_email
 
 class ContestantsController(BaseController):
     def route(self, path_parts: list[str], query_dict: dict[str, list[str]]):
@@ -66,13 +67,13 @@ class ContestantsController(BaseController):
 
             if path_parts[1] == "participations":
                 if command == "GET":
-                    ParticipationsController().get_single_participation(id, inner_id)
+                    ParticipationsController(self.handler).get_single_participation(inner_id, id)
                 elif command == "PUT":
-                    ParticipationsController().put_participation(id, inner_id)
+                    ParticipationsController(self.handler).put_participation(inner_id, id)
                 elif command == "PATCH":
-                    ParticipationsController().patch_participation(id, inner_id)
+                    ParticipationsController(self.handler).patch_participation(inner_id, id)
                 elif command == "DELETE":
-                    ParticipationsController().delete_participation(id, inner_id)
+                    ParticipationsController(self.handler).delete_participation(inner_id, id)
                 else:
                     self.simple_response_code(405)
             elif path_parts[1] == "awards":
@@ -122,6 +123,12 @@ class ContestantsController(BaseController):
             self.simple_response_code(400)
             self.output_error(Exception("Missing email"))
             return
+        else:
+            if not is_valid_email(req["email"]):
+                self.simple_response_code(400)
+                self.output_error(Exception("Invalid email"))
+                return
+
         if "school" not in req:
             self.simple_response_code(400)
             self.output_error(Exception("Missing school"))
@@ -144,7 +151,6 @@ class ContestantsController(BaseController):
                 cursor.execute("INSERT INTO CONTESTANTS(name, email, school) VALUES(:name, :email, :school) RETURNING id INTO :id", params)
                 conn.commit()
             except oracledb.DatabaseError as e:
-                print(e)
                 error = e.args[0]
                 self.simple_response_code(409)
                 self.output_error(Exception(contestant.Contestant.simplify_integrity_error_message(error.code, error.message)))
@@ -189,6 +195,12 @@ class ContestantsController(BaseController):
             self.simple_response_code(400)
             self.output_error(Exception("Missing email"))
             return
+        else:
+            if not is_valid_email(req["email"]):
+                self.simple_response_code(400)
+                self.output_error(Exception("Invalid email"))
+                return
+
         if "school" not in req:
             self.simple_response_code(400)
             self.output_error(Exception("Missing school"))
@@ -241,6 +253,12 @@ class ContestantsController(BaseController):
             self.output_error(Exception("ID may not be modified"))
             return
         
+        if "email" in req:
+            if not is_valid_email(req["email"]):
+                self.simple_response_code(400)
+                self.output_error(Exception("Invalid email"))
+                return
+
         if len({col.lower() for col in req.keys()} - set(contestant.Contestant.get_lowercase_columns())) > 0:
             self.simple_response_code(400)
             self.output_error(Exception("Invalid members in request"))
@@ -320,10 +338,16 @@ class ContestantsController(BaseController):
             self.simple_response_code(400)
             self.output_error(Exception("Missing answer"))
             return
-        if "contestant_id" in req and req["contestant_id"] != id:
-            self.simple_response_code(400)
-            self.output_error(Exception("Contestant ID may not be different between path and request"))
-            return
+        if "contestant_id" in req:
+            req["contestant_id"] = self.convert_numeric_or_code(req["contestant_id"], 400)
+            if req["contestant_id"] == None:
+                self.output_error(Exception("Invalid contestant ID"))
+                return
+
+            if req["contestant_id"] != id:
+                self.simple_response_code(400)
+                self.output_error(Exception("Contestant ID may not be different between path and request"))
+                return
         if "join_time" in req:
             self.simple_response_code(400)
             self.output_error(Exception("Join time may not be set"))

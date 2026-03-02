@@ -131,6 +131,22 @@ end;
 
 /
 
+create or replace trigger SUBMISSIONS_UPDATE
+before update on SUBMISSIONS
+for each row
+declare
+    v_current_time TIMESTAMP;
+begin
+    SELECT sysdate INTO v_current_time FROM DUAL; 
+    if(:new.answer is not null and :new.submission_time is null) then
+        :new.submission_time := v_current_time;
+    elsif (:new.answer is null) then
+        :new.submission_time := null;
+    end if;
+end;
+
+/
+
 create or replace trigger SUBMISSIONS_CHECK_ACTIVE_CONTEST
 before insert or update on SUBMISSIONS
 for each row
@@ -165,6 +181,9 @@ declare
     v_count INTEGER;
     v_status VARCHAR2(10);
     v_contest_id INTEGER;
+
+    e_mutating EXCEPTION;
+    PRAGMA EXCEPTION_INIT(e_mutating, -4091);
 begin
     if (INSERTING) then
         v_contest_id := :new.contest_id;
@@ -180,6 +199,10 @@ begin
     if(v_status is not null and v_status != 'active') then
         raise_application_error(-20003, 'Cannot add/remove prizes after contest has ended');
     end if;
+
+    EXCEPTION
+        WHEN e_mutating THEN --ignore mutating table when on cascade delete of contest
+            null;
 end;
 
 /
@@ -190,18 +213,26 @@ for each row
 declare
     v_count INTEGER;
     v_status VARCHAR2(10);
+
+    e_mutating EXCEPTION;
+    PRAGMA EXCEPTION_INIT(e_mutating, -4091);
 begin
-    select count(*) into v_count from CONTESTS where id = :new.contest_id;
+    begin
+        select count(*) into v_count from CONTESTS where id = :new.contest_id;
 
-    if(v_count > 0) then
-        select status into v_status from CONTESTS where id = :new.contest_id;
-    end if;
+        if(v_count > 0) then
+            select status into v_status from CONTESTS where id = :new.contest_id;
+        end if;
 
-    if(v_status is not null and v_status = 'ended' and (UPDATING('description') or UPDATING('initial_qty') or UPDATING('estimated_value'))) then
-        raise_application_error(-20004, 'Cannot modify prizes after contest has ended');
-    end if;
+        if(v_status is not null and v_status = 'ended' and (UPDATING('description') or UPDATING('initial_qty') or UPDATING('estimated_value'))) then
+            raise_application_error(-20004, 'Cannot modify prizes after contest has ended');
+        end if;
 
-    -- if the contest has not ended we may want to change quantity of prizes, and since no prize has been awarded yet remaining must be equal to initial
+        EXCEPTION
+            WHEN e_mutating THEN -- this can happen when contest is set to ended
+                v_status := 'ended';
+    end;
+    -- if the contest has not ended we may want to change initial quantity of prizes, and since no prize has been awarded yet remaining must be equal to initial
     if(v_status = 'active') then
         :new.remaining_qty := :new.initial_qty;
     end if;

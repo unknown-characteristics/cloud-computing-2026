@@ -12,7 +12,7 @@ class Participation:
         return "SUBMISSIONS"
 
     @staticmethod
-    def get_lowercase_columns() -> set[str]:
+    def get_lowercase_columns() -> list[str]:
         return ["contest_id", "contestant_id", "answer", "join_time", "submission_time"]
     
     @staticmethod
@@ -25,6 +25,8 @@ class Participation:
             return "Contestant is already participating in the contest"
         elif "cannot insert NULL into" in message or "to NULL" in message:
             return "ID may not be NULL"
+        elif code == 20002:
+            return "Cannot join/submit contest after contest has ended"
         else:
             return "Unknown database error"
 

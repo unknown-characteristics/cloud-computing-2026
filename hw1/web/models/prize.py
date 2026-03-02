@@ -11,7 +11,7 @@ class Prize:
         return "PRIZES"
 
     @staticmethod
-    def get_lowercase_columns() -> set[str]:
+    def get_lowercase_columns() -> list[str]:
         return ["contest_id", "prize_id", "initial_qty", "remaining_qty", "description", "estimated_value"]
     
     @staticmethod
@@ -27,6 +27,12 @@ class Prize:
                 return "Estimated value may not be NULL"
             else:
                 return "Cannot insert NULL"
+        elif "C_PRIZE_REMAINING_VALID" in message:
+            return "Quantity may not be negative"
+        elif code == 20003:
+            return "Cannot add/remove prizes after contest has ended"
+        elif code == 20004:
+            return "Cannot modify prizes after contest has ended"
         else:
             return "Unknown database error"
 

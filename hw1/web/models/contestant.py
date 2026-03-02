@@ -9,7 +9,7 @@ class Contestant:
         return "CONTESTANTS"
 
     @staticmethod
-    def get_lowercase_columns() -> set[str]:
+    def get_lowercase_columns() -> list[str]:
         return ["id", "name", "email", "school"]
     
     @staticmethod
