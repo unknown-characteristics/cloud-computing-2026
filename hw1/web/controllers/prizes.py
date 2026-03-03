@@ -101,8 +101,9 @@ class PrizesController(BaseController):
                 conn.commit()
             except oracledb.DatabaseError as e:
                 error = e.args[0]
-                self.simple_response_code(409)
-                self.output_error(Exception(prize.Prize.simplify_integrity_error_message(error.code, error.message)))
+                result = prize.Prize.simplify_integrity_error_message(error.code, error.message)
+                self.simple_response_code(result[0])
+                self.output_error(Exception(result[1]))
                 return
 
             item = get_by_id(prize.Prize, {"contest_id": contest_id, "prize_id": id_var.getvalue()[0]}, cursor)
@@ -120,8 +121,9 @@ class PrizesController(BaseController):
                 count = delete_by_id(prize.Prize, {"contest_id": contest_id, "prize_id": prize_id}, cursor)
             except oracledb.DatabaseError as e:
                 error = e.args[0]
-                self.simple_response_code(409)
-                self.output_error(Exception(prize.Prize.simplify_integrity_error_message(error.code, error.message)))
+                result = prize.Prize.simplify_integrity_error_message(error.code, error.message)
+                self.simple_response_code(result[0])
+                self.output_error(Exception(result[1]))
                 return
 
             if count == 0:
@@ -205,8 +207,9 @@ class PrizesController(BaseController):
                 count = update_by_id(prize.Prize, {"contest_id": contest_id, "prize_id": prize_id}, req, cursor)
             except oracledb.DatabaseError as e:
                 error = e.args[0]
-                self.simple_response_code(409)
-                self.output_error(Exception(prize.Prize.simplify_integrity_error_message(error.code, error.message)))
+                result = prize.Prize.simplify_integrity_error_message(error.code, error.message)
+                self.simple_response_code(result[0])
+                self.output_error(Exception(result[1]))
                 return
 
             if count == 0:
@@ -284,8 +287,9 @@ class PrizesController(BaseController):
                 count = update_by_id(prize.Prize, {"contest_id": contest_id, "prize_id": prize_id}, req, cursor)
             except oracledb.DatabaseError as e:
                 error = e.args[0]
-                self.simple_response_code(409)
-                self.output_error(Exception(prize.Prize.simplify_integrity_error_message(error.code, error.message)))
+                result = prize.Prize.simplify_integrity_error_message(error.code, error.message)
+                self.simple_response_code(result[0])
+                self.output_error(Exception(result[1]))
                 return
 
             if count == 0:

@@ -15,18 +15,18 @@ class Contestant:
     @staticmethod
     def simplify_integrity_error_message(code, message):
         if "unique" in message and "EMAIL" in message:
-            return "Another contestant has the same email"
+            return 409, "Another contestant has the same email"
         elif "cannot insert NULL into" in message or "to NULL":
             if "NAME" in message:
-                return "Name may not be NULL"
+                return 422, "Name may not be NULL"
             elif "SCHOOL" in message:
-                return "School may not be NULL"
+                return 422, "School may not be NULL"
             elif "EMAIL" in message:
-                return "Email may not be NULL"
+                return 422, "Email may not be NULL"
             else:
-                return "Cannot insert NULL"
+                return 422, "Cannot insert NULL"
         else:
-            return "Unknown database error"
+            return 500, "Unknown database error"
 
     def from_full_tuple(self, tuple):
         self.id = tuple[0]

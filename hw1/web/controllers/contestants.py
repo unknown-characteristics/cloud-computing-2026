@@ -152,8 +152,9 @@ class ContestantsController(BaseController):
                 conn.commit()
             except oracledb.DatabaseError as e:
                 error = e.args[0]
-                self.simple_response_code(409)
-                self.output_error(Exception(contestant.Contestant.simplify_integrity_error_message(error.code, error.message)))
+                result = contestant.Contestant.simplify_integrity_error_message(error.code, error.message)
+                self.simple_response_code(result[0])
+                self.output_error(Exception(result[1]))
                 return
 
             item = get_by_id(contestant.Contestant, {"id": id_var.getvalue()[0]}, cursor)
@@ -220,8 +221,9 @@ class ContestantsController(BaseController):
                 count = update_by_id(contestant.Contestant, {"id": id}, req, cursor)
             except oracledb.DatabaseError as e:
                 error = e.args[0]
-                self.simple_response_code(409)
-                self.output_error(Exception(contestant.Contestant.simplify_integrity_error_message(error.code, error.message)))
+                result = contestant.Contestant.simplify_integrity_error_message(error.code, error.message)
+                self.simple_response_code(result[0])
+                self.output_error(Exception(result[1]))
                 return
 
             if count == 0:
@@ -269,8 +271,9 @@ class ContestantsController(BaseController):
                 count = update_by_id(contestant.Contestant, {"id": id}, req, cursor)
             except oracledb.DatabaseError as e:
                 error = e.args[0]
-                self.simple_response_code(409)
-                self.output_error(Exception(contestant.Contestant.simplify_integrity_error_message(error.code, error.message)))
+                result = contestant.Contestant.simplify_integrity_error_message(error.code, error.message)
+                self.simple_response_code(result[0])
+                self.output_error(Exception(result[1]))
                 return
 
             if count == 0:
@@ -374,8 +377,9 @@ class ContestantsController(BaseController):
                 conn.commit()
             except oracledb.DatabaseError as e:
                 error = e.args[0]
-                self.simple_response_code(409)
-                self.output_error(Exception(participation.Participation.simplify_integrity_error_message(error.code, error.message)))
+                result = participation.Participation.simplify_integrity_error_message(error.code, error.message)
+                self.simple_response_code(result[0])
+                self.output_error(Exception(result[1]))
                 return
 
             item = get_by_id(participation.Participation, {"contest_id": req["contest_id"], "contestant_id": id}, cursor)

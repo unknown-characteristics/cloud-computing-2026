@@ -73,8 +73,9 @@ class ParticipationsController(BaseController):
                 count = update_by_id(participation.Participation, {"contest_id": contest_id, "contestant_id": contestant_id}, req, cursor)
             except oracledb.DatabaseError as e:
                 error = e.args[0]
-                self.simple_response_code(409)
-                self.output_error(Exception(participation.Participation.simplify_integrity_error_message(error.code, error.message)))
+                result = participation.Participation.simplify_integrity_error_message(error.code, error.message)
+                self.simple_response_code(result[0])
+                self.output_error(Exception(result[1]))
                 return
 
             if count == 0:
@@ -141,8 +142,9 @@ class ParticipationsController(BaseController):
                 count = update_by_id(participation.Participation, {"contest_id": contest_id, "contestant_id": contestant_id}, req, cursor)
             except oracledb.DatabaseError as e:
                 error = e.args[0]
-                self.simple_response_code(409)
-                self.output_error(Exception(participation.Participation.simplify_integrity_error_message(error.code, error.message)))
+                result = participation.Participation.simplify_integrity_error_message(error.code, error.message)
+                self.simple_response_code(result[0])
+                self.output_error(Exception(result[1]))
                 return
 
             if count == 0:

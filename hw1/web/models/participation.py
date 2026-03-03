@@ -18,17 +18,17 @@ class Participation:
     @staticmethod
     def simplify_integrity_error_message(code, message):
         if "C_SUBM_FK_CONTEST_ID" in message and "parent key not found" in message:
-            return "Contest ID was not found"
+            return 422, "Contest ID was not found"
         elif "C_SUBM_FK_CONTESTANT_ID" in message and "parent key not found" in message:
-            return "Contestant ID was not found"
+            return 422, "Contestant ID was not found"
         elif "C_SUBM_PK_CONTEST_CONTESTANT_ID" in message:
-            return "Contestant is already participating in the contest"
+            return 409, "Contestant is already participating in the contest"
         elif "cannot insert NULL into" in message or "to NULL" in message:
-            return "ID may not be NULL"
+            return 422, "ID may not be NULL"
         elif code == 20002:
-            return "Cannot join/submit contest after contest has ended"
+            return 409, "Cannot join/submit contest after contest has ended"
         else:
-            return "Unknown database error"
+            return 500, "Unknown database error"
 
     def from_full_tuple(self, tuple):
         self.contest_id = tuple[0]

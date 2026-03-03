@@ -14,15 +14,15 @@ class Award:
     @staticmethod
     def simplify_integrity_error_message(code, message):
         if "C_AWARD_FK_CONTEST_PRIZE_ID" in message and "parent key not found" in message:
-            return "Contest or prize ID was not found"
+            return 422, "Contest or prize ID was not found"
         elif "C_AWARD_FK_CONTESTANT_ID" in message and "parent key not found" in message:
-            return "Contest ID was not found"
+            return 422, "Contestant ID was not found"
         elif "C_AWARD_PK_ALL_IDS" in message:
-            return "Contestant already received the specified prize in the contest"
+            return 409, "Contestant already received the specified prize in the contest"
         elif "cannot insert NULL into" in message:
-            return "ID may not be NULL"
+            return 422, "ID may not be NULL"
         else:
-            return "Unknown database error"
+            return 500, "Unknown database error"
 
     def from_full_tuple(self, tuple):
         self.contest_id = tuple[0]

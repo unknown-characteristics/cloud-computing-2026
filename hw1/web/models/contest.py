@@ -20,24 +20,24 @@ class Contest:
     @staticmethod
     def simplify_integrity_error_message(code, message):
         if "C_CONTESTS_VALID_STATUS" in message and "parent key not found" in message:
-            return "Invalid status (must be 'active' or)"
+            return 422, "Invalid status (must be 'active' or)"
         elif "unique" in message and "NAME" in message:
-            return "Another contest has the same name"
+            return 409, "Another contest has the same name"
         elif "cannot insert NULL into" in message or "to NULL" in message:
             if "NAME" in message:
-                return "Name may not be NULL"
+                return 422, "Name may not be NULL"
             elif "DIFFICULTY" in message:
-                return "Difficulty may not be NULL"
+                return 422, "Difficulty may not be NULL"
             elif "SOLUTION" in message:
-                return "Solution may not be NULL"
+                return 422, "Solution may not be NULL"
             elif "STATUS" in message:
-                return "Status may not be NULL"
+                return 422, "Status may not be NULL"
             else:
-                return "Cannot insert NULL"
+                return 422, "Cannot insert NULL"
         elif code == 20202:
-            return "Cannot modify contest after ending it"
+            return 409, "Cannot modify contest after ending it"
         else:
-            return "Unknown database error"
+            return 500, "Unknown database error"
 
     def from_full_tuple(self, tuple):
         self.id = tuple[0]
