@@ -125,7 +125,7 @@ class ContestantsController(BaseController):
             return
         else:
             if not is_valid_email(req["email"]):
-                self.simple_response_code(400)
+                self.simple_response_code(422)
                 self.output_error(Exception("Invalid email"))
                 return
 
@@ -134,12 +134,12 @@ class ContestantsController(BaseController):
             self.output_error(Exception("Missing school"))
             return
         if "id" in req:
-            self.simple_response_code(400)
+            self.simple_response_code(422)
             self.output_error(Exception("ID may not be set"))
             return
         
         if len({col.lower() for col in req.keys()} - set(contestant.Contestant.get_lowercase_columns())) > 0:
-            self.simple_response_code(400)
+            self.simple_response_code(422)
             self.output_error(Exception("Invalid members in request"))
             return
         
@@ -197,7 +197,7 @@ class ContestantsController(BaseController):
             return
         else:
             if not is_valid_email(req["email"]):
-                self.simple_response_code(400)
+                self.simple_response_code(422)
                 self.output_error(Exception("Invalid email"))
                 return
 
@@ -206,12 +206,12 @@ class ContestantsController(BaseController):
             self.output_error(Exception("Missing school"))
             return
         if "id" in req and req["id"] != id:
-            self.simple_response_code(400)
+            self.simple_response_code(422)
             self.output_error(Exception("ID may not be modified"))
             return
         
         if len({col.lower() for col in req.keys()} - set(contestant.Contestant.get_lowercase_columns())) > 0:
-            self.simple_response_code(400)
+            self.simple_response_code(422)
             self.output_error(Exception("Invalid members in request"))
             return
         
@@ -249,18 +249,18 @@ class ContestantsController(BaseController):
             return
         
         if "id" in req and req["id"] != id:
-            self.simple_response_code(400)
+            self.simple_response_code(422)
             self.output_error(Exception("ID may not be modified"))
             return
         
         if "email" in req:
             if not is_valid_email(req["email"]):
-                self.simple_response_code(400)
+                self.simple_response_code(422)
                 self.output_error(Exception("Invalid email"))
                 return
 
         if len({col.lower() for col in req.keys()} - set(contestant.Contestant.get_lowercase_columns())) > 0:
-            self.simple_response_code(400)
+            self.simple_response_code(422)
             self.output_error(Exception("Invalid members in request"))
             return
         
@@ -345,20 +345,20 @@ class ContestantsController(BaseController):
                 return
 
             if req["contestant_id"] != id:
-                self.simple_response_code(400)
+                self.simple_response_code(422)
                 self.output_error(Exception("Contestant ID may not be different between path and request"))
                 return
         if "join_time" in req:
-            self.simple_response_code(400)
+            self.simple_response_code(422)
             self.output_error(Exception("Join time may not be set"))
             return
         if "submission_time" in req:
-            self.simple_response_code(400)
+            self.simple_response_code(422)
             self.output_error(Exception("Submission time may not be set"))
             return
 
         if len({col.lower() for col in req.keys()} - set(participation.Participation.get_lowercase_columns())) > 0:
-            self.simple_response_code(400)
+            self.simple_response_code(422)
             self.output_error(Exception("Invalid members in request"))
             return
         

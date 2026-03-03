@@ -47,7 +47,7 @@ class PrizesController(BaseController):
                 return
 
             if req["contest_id"] != contest_id:
-                self.simple_response_code(400)
+                self.simple_response_code(422)
                 self.output_error(Exception("Contest ID may not be different between path and request"))
                 return
 
@@ -74,16 +74,16 @@ class PrizesController(BaseController):
                 self.output_error(Exception("Invalid estimated value"))
     
         if "prize_id" in req:
-            self.simple_response_code(400)
+            self.simple_response_code(422)
             self.output_error(Exception("Prize ID may not be set"))
             return
         if "remaining_qty" in req:
-            self.simple_response_code(400)
+            self.simple_response_code(422)
             self.output_error(Exception("Remaining quantity may not be set"))
             return
 
         if len({col.lower() for col in req.keys()} - set(prize.Prize.get_lowercase_columns())) > 0:
-            self.simple_response_code(400)
+            self.simple_response_code(422)
             self.output_error(Exception("Invalid members in request"))
             return
         
@@ -149,7 +149,7 @@ class PrizesController(BaseController):
                 return
 
             if req["prize_id"] != prize_id:
-                self.simple_response_code(400)
+                self.simple_response_code(422)
                 self.output_error(Exception("Prize ID may not be different between path and request"))
                 return
         if "contest_id" in req:
@@ -159,7 +159,7 @@ class PrizesController(BaseController):
                 return
 
             if req["contest_id"] != contest_id:
-                self.simple_response_code(400)
+                self.simple_response_code(422)
                 self.output_error(Exception("Contest ID may not be different between path and request"))
                 return
 
@@ -186,12 +186,12 @@ class PrizesController(BaseController):
                 self.output_error(Exception("Invalid estimated value"))
 
         if "remaining_qty" in req:
-            self.simple_response_code(400)
+            self.simple_response_code(422)
             self.output_error(Exception("Remaining quantity may not be set"))
             return
 
         if len({col.lower() for col in req.keys()} - set(prize.Prize.get_lowercase_columns())) > 0:
-            self.simple_response_code(400)
+            self.simple_response_code(422)
             self.output_error(Exception("Invalid members in request"))
             return
         
@@ -240,7 +240,7 @@ class PrizesController(BaseController):
                 return
 
             if req["prize_id"] != prize_id:
-                self.simple_response_code(400)
+                self.simple_response_code(422)
                 self.output_error(Exception("Prize ID may not be different between path and request"))
                 return
         if "contest_id" in req:
@@ -250,7 +250,7 @@ class PrizesController(BaseController):
                 return
 
             if req["contest_id"] != contest_id:
-                self.simple_response_code(400)
+                self.simple_response_code(422)
                 self.output_error(Exception("Contest ID may not be different between path and request"))
                 return
 
@@ -265,12 +265,12 @@ class PrizesController(BaseController):
                 self.output_error(Exception("Invalid estimated value"))
 
         if "remaining_qty" in req:
-            self.simple_response_code(400)
+            self.simple_response_code(422)
             self.output_error(Exception("Remaining quantity may not be set"))
             return
 
         if len({col.lower() for col in req.keys()} - set(prize.Prize.get_lowercase_columns())) > 0:
-            self.simple_response_code(400)
+            self.simple_response_code(422)
             self.output_error(Exception("Invalid members in request"))
             return
         

@@ -152,15 +152,15 @@ class ContestsController(BaseController):
             self.output_error(Exception("Missing solution"))
             return
         if "id" in req:
-            self.simple_response_code(400)
+            self.simple_response_code(422)
             self.output_error(Exception("ID may not be set"))
             return
         if "start_time" in req:
-            self.simple_response_code(400)
+            self.simple_response_code(422)
             self.output_error(Exception("Start time may not be set"))
             return
         if "end_time" in req:
-            self.simple_response_code(400)
+            self.simple_response_code(422)
             self.output_error(Exception("End time may not be set"))
             return
         
@@ -168,12 +168,12 @@ class ContestsController(BaseController):
             req["status"] = "active"
         else:
             if req["status"] not in ["active", "ended"]:
-                self.simple_response_code(400)
+                self.simple_response_code(422)
                 self.output_error(Exception("Invalid status (only 'active' or 'ended' are allowed)"))
                 return
         
         if len({col.lower() for col in req.keys()} - set(contest.Contest.get_lowercase_columns())) > 0:
-            self.simple_response_code(400)
+            self.simple_response_code(422)
             self.output_error(Exception("Invalid members in request"))
             return
         
@@ -243,20 +243,20 @@ class ContestsController(BaseController):
             self.output_error(Exception("Missing status"))
             return
         if "id" in req and req["id"] != id:
-            self.simple_response_code(400)
+            self.simple_response_code(422)
             self.output_error(Exception("ID may not be modified"))
             return
         if "start_time" in req:
-            self.simple_response_code(400)
+            self.simple_response_code(422)
             self.output_error(Exception("Start time may not be modified"))
             return
         if "end_time" in req:
-            self.simple_response_code(400)
+            self.simple_response_code(422)
             self.output_error(Exception("End time may not be modified"))
             return
         
         if len({col.lower() for col in req.keys()} - set(contest.Contest.get_lowercase_columns())) > 0:
-            self.simple_response_code(400)
+            self.simple_response_code(422)
             self.output_error(Exception("Invalid members in request"))
             return
         
@@ -294,7 +294,7 @@ class ContestsController(BaseController):
             return
         
         if "id" in req and req["id"] != id:
-            self.simple_response_code(400)
+            self.simple_response_code(422)
             self.output_error(Exception("ID may not be modified"))
             return
 
@@ -305,16 +305,16 @@ class ContestsController(BaseController):
                 return
 
         if "start_time" in req:
-            self.simple_response_code(400)
+            self.simple_response_code(422)
             self.output_error(Exception("Start time may not be modified"))
             return
         if "end_time" in req:
-            self.simple_response_code(400)
+            self.simple_response_code(422)
             self.output_error(Exception("End time may not be modified"))
             return
         
         if len({col.lower() for col in req.keys()} - set(contest.Contest.get_lowercase_columns())) > 0:
-            self.simple_response_code(400)
+            self.simple_response_code(422)
             self.output_error(Exception("Invalid members in request"))
             return
         
@@ -390,7 +390,7 @@ class ContestsController(BaseController):
                 return
 
             if req["contest_id"] != id:
-                self.simple_response_code(400)
+                self.simple_response_code(422)
                 self.output_error(Exception("Contest ID may not be different between path and request"))
                 return
         if "contestant_id" not in req or req["contestant_id"] == None:
@@ -403,16 +403,16 @@ class ContestsController(BaseController):
             self.output_error(Exception("Missing answer"))
             return
         if "join_time" in req:
-            self.simple_response_code(400)
+            self.simple_response_code(422)
             self.output_error(Exception("Join time may not be set"))
             return
         if "submission_time" in req:
-            self.simple_response_code(400)
+            self.simple_response_code(422)
             self.output_error(Exception("Submission time may not be set"))
             return
 
         if len({col.lower() for col in req.keys()} - set(participation.Participation.get_lowercase_columns())) > 0:
-            self.simple_response_code(400)
+            self.simple_response_code(422)
             self.output_error(Exception("Invalid members in request"))
             return
         
