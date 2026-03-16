@@ -53,9 +53,9 @@ async def patch_contest(response: Response, id: int, token: str = Depends(auth.o
     return await simple_proxy_request(response, "PATCH", f"http://{settings.CONTREST_URL}/contests/{id}", [200], update_contest.model_dump_json(exclude_unset=True))
 
 @router.delete("/contests/{id}")
-async def delete_contest(response: Response, id: int, token: str = Depends(auth.oauth2_scheme), update_contest: contests.UpdateContest = Body()):
+async def delete_contest(response: Response, id: int, token: str = Depends(auth.oauth2_scheme)):
     auth.check_admin_or_id_and_get_user(token, None)
-    return await simple_proxy_request(response, "DELETE", f"http://{settings.CONTREST_URL}/contests/{id}", [200, 204], update_contest.model_dump_json(exclude_unset=True))
+    return await simple_proxy_request(response, "DELETE", f"http://{settings.CONTREST_URL}/contests/{id}", [200, 204])
 
 @router.get("/contests/{id}/leaderboard", response_model=list[rankings.GetRanking])
 async def get_leaderboard(response: Response, id: int):

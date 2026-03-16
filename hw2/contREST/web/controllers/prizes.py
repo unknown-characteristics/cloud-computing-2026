@@ -54,8 +54,8 @@ class PrizesController(BaseController):
             self.simple_response_code(400)
             self.output_error(Exception("Missing description"))
             return
-        if "photo_data" not in req:
-            req["photo_data"] = None
+        if "photo_data" not in req or req["photo_data"] is None:
+            req["photo_data"] = json.dumps(None)
         if "initial_qty" not in req:
             self.simple_response_code(400)
             self.output_error(Exception("Missing initial quantity"))
@@ -96,7 +96,7 @@ class PrizesController(BaseController):
             
             id_var = cursor.var(int)
             params = {"contest_id": contest_id, "initial_qty": req["initial_qty"], "remaining_qty": req["initial_qty"], "description": req["description"], "estimated_value": req["estimated_value"], "photo_data": str(req["photo_data"]), "prize_id": id_var}
-            
+
             try:
                 cursor.execute("INSERT INTO PRIZES(contest_id, initial_qty, remaining_qty, description, estimated_value, photo_data) VALUES(:contest_id, :initial_qty, :remaining_qty, :description, :estimated_value, :photo_data) RETURNING prize_id INTO :prize_id", params)
                 conn.commit()
@@ -171,8 +171,10 @@ class PrizesController(BaseController):
             self.simple_response_code(400)
             self.output_error(Exception("Missing description"))
             return
-        if "photo_data" not in req:
-            req["photo_data"] = None
+        if "photo_data" not in req or req["photo_data"] is None:
+            req["photo_data"] = json.dumps(None)
+
+        req["photo_data"] = str(req["photo_data"])
         if "initial_qty" not in req:
             self.simple_response_code(400)
             self.output_error(Exception("Missing initial quantity"))
@@ -276,6 +278,11 @@ class PrizesController(BaseController):
             self.output_error(Exception("Remaining quantity may not be set"))
             return
 
+        print(req["photo_data"])
+        if "photo_data" not in req or req["photo_data"] is None:
+            req["photo_data"] = json.dumps(None)
+
+        req["photo_data"] = str(req["photo_data"])
         if len({col.lower() for col in req.keys()} - set(prize.Prize.get_lowercase_columns())) > 0:
             self.simple_response_code(422)
             self.output_error(Exception("Invalid members in request"))
