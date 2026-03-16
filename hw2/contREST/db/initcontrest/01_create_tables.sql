@@ -43,7 +43,7 @@ CREATE TABLE AWARDS(
     prize_id INTEGER NOT NULL,
     contestant_id INTEGER NOT NULL,
     CONSTRAINT c_award_fk_contest_prize_id FOREIGN KEY(contest_id, prize_id) REFERENCES PRIZES(contest_id, prize_id) ON DELETE CASCADE,
-    CONSTRAINT c_award_fk_contest_id FOREIGN KEY(contest_id) REFERENCES CONTESTANTS(id) ON DELETE CASCADE,
+    CONSTRAINT c_award_fk_contestant_id FOREIGN KEY(contestant_id) REFERENCES CONTESTANTS(id) ON DELETE CASCADE,
     CONSTRAINT c_award_pk_all_ids PRIMARY KEY(contest_id, prize_id, contestant_id)
 );
 

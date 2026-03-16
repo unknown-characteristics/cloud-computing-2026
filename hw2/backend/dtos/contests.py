@@ -12,7 +12,7 @@ class CreateContest(BaseModel):
 class GetContest(BaseModel):
     id: int
     name: str
-    hint: str
+    hint: str | None
     difficulty: float
     solution: str
     start_time: datetime.datetime
@@ -22,7 +22,7 @@ class GetContest(BaseModel):
 class ModifyContest(BaseModel):
     name: str
     difficulty: float
-    hint: str
+    hint: str | None
     solution: str
     status: StatusEnum
 

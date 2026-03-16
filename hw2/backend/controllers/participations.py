@@ -3,6 +3,7 @@ from httpx import AsyncClient
 
 from dtos import contests, participations
 from enums.status import StatusEnum
+from enums.role import RoleEnum
 from utils.settings import settings
 
 from utils import auth
@@ -54,7 +55,7 @@ async def post_participation(response: Response, contest_id: int = -1, contestan
     
     auth.check_admin_or_id_and_get_user(token, None, contestant_id, True)
 
-    if create_participation.score is None:
+    if create_participation.score is None or auth.decode_token(token)["role"] != RoleEnum.admin.value:
         if create_participation.answer is None:
             create_participation.score = 0
         else:
@@ -67,7 +68,7 @@ async def post_participation(response: Response, contest_id: int = -1, contestan
 async def put_participation(response: Response, contest_id: int, contestant_id: int, token: str = Depends(auth.oauth2_scheme), modify_participation: participations.ModifyParticipation = Body()):
     auth.check_admin_or_id_and_get_user(token, None, contestant_id, True)
 
-    if modify_participation.score is None:
+    if modify_participation.score is None or auth.decode_token(token)["role"] != RoleEnum.admin.value:
         if modify_participation.answer is None:
             modify_participation.score = 0
         else:
@@ -80,7 +81,7 @@ async def put_participation(response: Response, contest_id: int, contestant_id: 
 async def patch_participation(response: Response, contest_id: int, contestant_id: int, token: str = Depends(auth.oauth2_scheme), update_participation: participations.UpdateParticipation = Body()):
     auth.check_admin_or_id_and_get_user(token, None, contestant_id, True)
 
-    if update_participation.score is None:
+    if update_participation.score is None or auth.decode_token(token)["role"] != RoleEnum.admin.value:
         if update_participation.answer is None:
             update_participation.score = 0
         else:

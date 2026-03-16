@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, status, Request
+from fastapi.middleware.cors import CORSMiddleware
 from jose import JWTError, ExpiredSignatureError
 import uvicorn
 from contextlib import asynccontextmanager
@@ -23,6 +24,19 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(lifespan=lifespan)
+
+origins = [
+    "http://localhost:5173",
+    "http://localhost:3000"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(users.router)
 app.include_router(prizes.router)

@@ -239,8 +239,9 @@ class ContestsController(BaseController):
             self.output_error(Exception("Missing difficulty"))
             return
         else:
-            req["difficulty"] = self.convert_numeric_or_code(req["difficulty"], 400)
+            req["difficulty"] = self.convert_float_or_code(req["difficulty"], 400)
             if req["difficulty"] == None or not 0 <= req["difficulty"] <= 9:
+                self.simple_response_code(422)
                 self.output_error(Exception("Invalid difficulty"))
                 return
 
@@ -310,8 +311,9 @@ class ContestsController(BaseController):
             return
 
         if "difficulty" in req:
-            req["difficulty"] = self.convert_numeric_or_code(req["difficulty"], 400)
+            req["difficulty"] = self.convert_float_or_code(req["difficulty"], 400)
             if req["difficulty"] == None or not 0 <= req["difficulty"] <= 9:
+                self.simple_response_code(422)
                 self.output_error(Exception("Invalid difficulty"))
                 return
 
@@ -333,6 +335,7 @@ class ContestsController(BaseController):
             try:
                 count = update_by_id(contest.Contest, {"id": id}, req, cursor)
             except oracledb.DatabaseError as e:
+                print(req)
                 error = e.args[0]
                 result = contest.Contest.simplify_integrity_error_message(error.code, error.message)
                 self.simple_response_code(result[0])

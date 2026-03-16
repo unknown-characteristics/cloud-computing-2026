@@ -10,6 +10,7 @@ from utils.requests import simple_proxy_request
 router = APIRouter()
 
 async def helper_get_hint(name: str, difficulty: float, solution: str):
+    # return "NONE"
     prompt = f"Question name '{name}'\nDifficulty (0 - 9) {difficulty}\nSolution '{solution}'\nGenerate a hint for the solution which does not reveal the answer while considering the difficulty. Question name may be irrelevant, focus on the solution. ONLY output the hint, and DO NOT mention the solution (or part of it) outright."
     hint_request = {"generationConfig": {"temperature": 0.3, "thinkingConfig": {"thinkingBudget": 0}}, "contents": [{"parts": [{"text": prompt}]}]}
 
@@ -35,16 +36,18 @@ async def get_contestant_by_id(response: Response, id: int):
 @router.post("/contests", response_model=contests.GetContest)
 async def post_contest(response: Response, token: str = Depends(auth.oauth2_scheme), create_contest: contests.CreateContest = Body()):
     auth.check_admin_or_id_and_get_user(token, None)
-
-    if create_contest.hint is None:
-        # create_contest.hint = helper_get_hint(create_contest.name, create_contest.difficulty, create_contest.solution)
-        create_contest.hint = "none"
+    if create_contest.hint is None or create_contest.hint == "":
+        create_contest.hint = await helper_get_hint(create_contest.name, create_contest.difficulty, create_contest.solution)
 
     return await simple_proxy_request(response, "POST", f"http://{settings.CONTREST_URL}/contests", [200], create_contest.model_dump_json(exclude_unset=True))
 
 @router.put("/contests/{id}", response_model=contests.GetContest)
 async def put_contest(response: Response, id: int, token: str = Depends(auth.oauth2_scheme), modify_contest: contests.ModifyContest = Body()):
     auth.check_admin_or_id_and_get_user(token, None)
+    
+    if modify_contest.hint is None or modify_contest.hint == "":
+        modify_contest.hint = await helper_get_hint(modify_contest.name, modify_contest.difficulty, modify_contest.solution)
+
     return await simple_proxy_request(response, "PUT", f"http://{settings.CONTREST_URL}/contests/{id}", [200], modify_contest.model_dump_json())
 
 @router.patch("/contests/{id}", response_model=contests.GetContest)

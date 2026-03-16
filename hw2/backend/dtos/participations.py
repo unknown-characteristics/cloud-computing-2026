@@ -4,7 +4,7 @@ import datetime
 class CreateParticipation(BaseModel):
     contest_id: int | None = None
     contestant_id: int | None = None
-    answer: str | None
+    answer: str | None = None
     score: float | None = None
 
 class GetParticipation(BaseModel):

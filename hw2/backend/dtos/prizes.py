@@ -32,10 +32,10 @@ class ModifyPrize(BaseModel):
     initial_qty: int
     description: str
     estimated_value: int
-    photo_data: GetPhotoModel | None
+    photo_data: GetPhotoModel | None = None
 
 class UpdatePrize(BaseModel):
     initial_qty: int | None = None
     description: str | None = None
     estimated_value: int | None = None
-    photo_data: GetPhotoModel | None
+    photo_data: GetPhotoModel | None = None

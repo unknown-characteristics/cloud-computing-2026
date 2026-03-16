@@ -278,7 +278,6 @@ class PrizesController(BaseController):
             self.output_error(Exception("Remaining quantity may not be set"))
             return
 
-        print(req["photo_data"])
         if "photo_data" not in req or req["photo_data"] is None:
             req["photo_data"] = json.dumps(None)
 

@@ -46,7 +46,7 @@ async def helper_create_user(create_user: users.CreateUser, role: RoleEnum, db: 
 
     existing = db.execute(select(User).filter(User.username == create_user.username)).first()
     if existing:
-        raise HTTPException(status.HTTP_409_BAD_REQUEST, "Username already exists")
+        raise HTTPException(status.HTTP_409_CONFLICT, "Username already exists")
     
     contestant_create = contestants.CreateContestant(name=create_user.name, school=create_user.school)
     async with AsyncClient() as client:
@@ -138,7 +138,7 @@ async def delete_user_by_id(id: int, token: str = Depends(auth.oauth2_scheme), d
 
     db.delete(deleted_user)
     async with AsyncClient() as client:
-        response = await client.delete(f"http://{settings.CONTREST_URL}/contestants/{id}")
+        response = await client.delete(f"http://{settings.CONTREST_URL}/contestants/{deleted_user.contestant_id}")
         if response.status_code != 204 and response.status_code != 404:
             db.rollback()
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Couldn't delete user")
@@ -150,7 +150,7 @@ async def delete_user_by_id(id: int, token: str = Depends(auth.oauth2_scheme), d
 async def put_user(id: int, token: str = Depends(auth.oauth2_scheme), db: Session = Depends(get_db), modify_user: users.ModifyUser = Body()):
     user = auth.check_admin_or_id_and_get_user(token, db, id)
 
-    if user.role != RoleEnum.admin.value and modify_user.role == RoleEnum.admin.value:
+    if user.role != RoleEnum.admin and modify_user.role == RoleEnum.admin:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Cannot change role to admin")
 
     if user.id == id:
@@ -171,7 +171,7 @@ async def put_user(id: int, token: str = Depends(auth.oauth2_scheme), db: Sessio
 
     modified_user.pwhash = auth.hash_password(modify_user.password)
 
-    if user.role != RoleEnum.admin.value and modify_user.role == RoleEnum.admin:
+    if user.role != RoleEnum.admin and modify_user.role == RoleEnum.admin:
             raise HTTPException(status.HTTP_403_FORBIDDEN, "Cannot change role to admin")
     if modify_user.role != RoleEnum.admin and modified_user.username == "admin":
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Cannot change role of main admin user")
@@ -209,7 +209,7 @@ async def patch_user(id: int, token: str = Depends(auth.oauth2_scheme), db: Sess
         modified_user.pwhash = auth.hash_password(update_user.password)
 
     if update_user.role != None:
-        if user.role != RoleEnum.admin.value and update_user.role == RoleEnum.admin:
+        if user.role != RoleEnum.admin and update_user.role == RoleEnum.admin:
             raise HTTPException(status.HTTP_403_FORBIDDEN, "Cannot change role to admin")
         
         if update_user.role != RoleEnum.admin and modified_user.username == "admin":

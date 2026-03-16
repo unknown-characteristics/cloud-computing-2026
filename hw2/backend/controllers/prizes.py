@@ -84,5 +84,6 @@ async def delete_prize(response: Response, contest_id: int, prize_id: int, token
     return await simple_proxy_request(response, "DELETE", f"http://{settings.CONTREST_URL}/contests/{contest_id}/prizes/{prize_id}", [200, 204])
 
 @router.get("/search-prize-photos", response_model=list[prizes.GetPhotoModel])
-async def get_photos(description: str = Body()):
+async def get_photos(description: str, token: str = Depends(auth.oauth2_scheme)):
+    auth.check_admin_or_id_and_get_user(token, None)
     return await helper_get_photos(description)
