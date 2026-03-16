@@ -1,0 +1,30 @@
+name: contREST
+services:
+  web:
+    build:
+      context: ./..
+      dockerfile: ./dev/web.dockerfile
+    ports:
+      - "10101:80"
+    volumes:
+      - ./../web:/app
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - SERVER_PORT=80
+      - WATCHDOG_FORCE_POLLING=true
+  db:
+    image: gvenzl/oracle-free:slim
+    ports:
+      - "1513:1521"
+    environment:
+      ORACLE_PASSWORD: contREST
+      ORACLE_DATABASE: PDBCONTREST
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+      - ./../db/initsystem:/container-entrypoint-initdb.d
+      - ./../db/initcontrest:/contrest/dbinit/
+
+volumes:
+  oracle-data:
