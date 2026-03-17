@@ -57,4 +57,4 @@ async def handle_database_error(request: Request, exc: DatabaseError):
     raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Unknown database error")
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=5014)
+    uvicorn.run(app, host="0.0.0.0", port=5013)

@@ -33,7 +33,7 @@ export function PrizeView({ contest_id, prize_id, dataOverride })
     }, [contest_id, prize_id, dataOverride]);
     
     useEffect(() => {
-        if(!prizeData || role !== "admin")
+        if(!prizeData || role !== "admin" || photoOpen == false)
             return;
 
         setPhotoList(null);
@@ -44,7 +44,7 @@ export function PrizeView({ contest_id, prize_id, dataOverride })
         }).catch (err => {
             setError(getAPIErrorMessage(err.response));
         })
-    }, [prizeData]);
+    }, [prizeData, photoOpen]);
 
     useEffect(() => {
         if(dataOverride)

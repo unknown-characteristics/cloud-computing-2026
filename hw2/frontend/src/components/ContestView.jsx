@@ -92,7 +92,7 @@ export function ContestView({ id, dataOverride })
         api.post(`/contests/${id}/participations`, {contestant_id: user.contestant_id, contest_id: id}).then(response => {
             setPartData(response.data);
         }).catch(err =>
-            setError(getAPIErrorMessage(`Couldn't enroll: ${getAPIErrorMessage(err.response)}`))
+            setError(`Couldn't enroll: ${getAPIErrorMessage(err.response)}`)
         )
     }, [id, user])
 
@@ -158,7 +158,7 @@ export function ContestView({ id, dataOverride })
             <ParticipationView contest_id={id} contestant_id={user.contestant_id} dataOverride={partData}></ParticipationView>}
 
             {contestData?.status === "ended" && <CommonList name="Leaderboard" fields={["contestant_id", "score", "award_id"]} view={false} url={`/contests/${id}/leaderboard`}></CommonList>}
-            <CommonList name="Prizes" fields={["prize_id", "description", "estimated_value"]} url={`/contests/${id}/prizes`} id_key="prize_id" createCallback={role === "admin" ? createPrize : null}></CommonList>
+            <CommonList name="Prizes" fields={["prize_id", "description", "estimated_value"]} url={`/contests/${id}/prizes`} id_key="prize_id" createCallback={role === "admin" && contestData?.status === "active" ? createPrize : null}></CommonList>
         </Container>
     )
 }
