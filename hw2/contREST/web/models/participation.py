@@ -24,6 +24,8 @@ class Participation:
             return 422, "Contestant ID was not found"
         elif "C_SUBM_PK_CONTEST_CONTESTANT_ID" in message:
             return 409, "Contestant is already participating in the contest"
+        elif "C_SUBM_VALID_SCORE" in message:
+            return 422, "Score must be between 0 and 1"
         elif "cannot insert NULL into" in message or "to NULL" in message:
             if "score" in message or "SCORE" in message:
                 return 422, "Score may not be NULL"
