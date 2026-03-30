@@ -1,8 +1,9 @@
-import os
+import json
 import vertexai
 from vertexai.generative_models import GenerativeModel
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from google.cloud import pubsub_v1
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -48,3 +49,12 @@ async def chat_post(request: ChatRequest):
     except Exception as e:
         print(f"Error calling Vertex AI: {e}")
         raise HTTPException(status_code=500, detail="Failed to get a response from the model.")
+    
+@app.post("/pubsub")
+async def send_msg(message: str):
+    publisher = pubsub_v1.PublisherClient()
+    topic_path = publisher.topic_path("cloudcomputing-491711", "test-topic")
+    future = publisher.publish(topic_path, bytes(json.dumps({"message": message}), "UTF-8"))    
+    print(f"Future from publishing '{message}': {future}")
+    return {"res": "done"}
+
