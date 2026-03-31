@@ -5,3 +5,4 @@ flask
 requests
 cloudevents
 google-cloud-storage
+google-cloud-datastore
