@@ -53,7 +53,7 @@ def my_function(request: Request):
         obj = TestTopic.model_validate_json(obj)
     except Exception as e:
         return f"Bad format: {str(e)}", 401
-
+    
     now = datetime.datetime.now(datetime.timezone.utc)
     # storage bucket
     storage_client = storage.Client()

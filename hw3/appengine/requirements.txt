@@ -2,3 +2,11 @@ fastapi
 uvicorn[standard]
 google-cloud-aiplatform
 google-cloud-pubsub
+google-cloud-firestore
+passlib[bcrypt]
+sqlalchemy
+pymysql
+cryptography
+pyjwt
+pydantic[email]
+pydantic-settings

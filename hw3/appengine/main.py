@@ -5,12 +5,27 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from google.cloud import pubsub_v1
 
+from user_service.app.api.user_controller import router as user_router
+from user_service.app.core.database import engine, Base
+from user_service.app.model import user_model
+
+from helpers.settings import settings
+
+# create database
+Base.metadata.create_all(bind=engine)
+
 # Initialize FastAPI app
 app = FastAPI()
 
-vertexai.init(project="cloudcomputing-491711", location="us-central1")
+# user endpoints 
+app.include_router(user_router)
 
-model = GenerativeModel("gemini-2.5-flash")
+vertexai.init(
+    project=settings.cloud_project_name, 
+    location=settings.cloud_project_location
+)
+
+model = GenerativeModel(settings.generative_model)
 
 class ChatRequest(BaseModel):
     message: str
@@ -53,7 +68,7 @@ async def chat_post(request: ChatRequest):
 @app.post("/pubsub")
 async def send_msg(message: str):
     publisher = pubsub_v1.PublisherClient()
-    topic_path = publisher.topic_path("cloudcomputing-491711", "test-topic")
+    topic_path = publisher.topic_path(settings.cloud_project_name, "test-topic")
     future = publisher.publish(topic_path, bytes(json.dumps({"message": message}), "UTF-8"))    
     print(f"Future from publishing '{message}': {future}")
     return {"res": "done"}
