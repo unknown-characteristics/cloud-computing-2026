@@ -6,7 +6,8 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
 
-    cloud_project_id: str
+    project_id: str
+    pubsub_topic: str
 
     # Tell Pydantic to read from the .env file
     model_config = SettingsConfigDict(env_file="settings.env", env_file_encoding="utf-8")

@@ -1,28 +1,34 @@
-from google.cloud import firestore
+from google.cloud import datastore
 
-from app.core.firestore_client import get_firestore_client
+from app.core.datastore_client import get_datastore_client
 from app.models.other_event import OtherEvent
 
-COLLECTION = "other_events"
-
+KIND = "other-events"
 
 class OtherEventRepository:
     def __init__(self):
-        self._db: firestore.AsyncClient = get_firestore_client()
+        self._db: datastore.Client = get_datastore_client()
 
-    @property
-    def _collection(self):
-        return self._db.collection(COLLECTION)
+    def _key(self, event_id: str):
+        return self._db.key(KIND, event_id)
 
-    async def exists(self, event_id: str) -> bool:
-        docs = self._collection.where("event_id", "==", event_id).limit(1).stream()
-        async for _ in docs:
-            return True
-        return False
+    def exists(self, event_id: str) -> bool:
+        key = self._key(event_id)
+        entity = self._db.get(key)
+        return entity is not None
 
-    async def create(self, event_id: str) -> OtherEvent:
+    def create(self, event_id: str) -> OtherEvent:
+        key = self._key(event_id)
+
+        # Prevent overwrite if already exists
+        if self._db.get(key):
+            raise ValueError(f"OtherEvent with event_id '{event_id}' already exists")
+
         event = OtherEvent(event_id=event_id)
-        doc_ref = self._collection.document()
-        await doc_ref.set(event.model_dump(exclude={"id"}))
-        event.id = doc_ref.id
+        entity = datastore.Entity(key=key)
+
+        entity.update(event.model_dump(exclude={"id"}))
+        self._db.put(entity)
+
+        event.id = event_id  # key name = event_id
         return event

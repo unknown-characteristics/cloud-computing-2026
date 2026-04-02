@@ -4,8 +4,8 @@ from pydantic import BaseModel
 
 class OtherEvent(BaseModel):
     """
-    Mirrors the Firestore 'other_events' kind schema.
+    Mirrors the Datastore 'other-events' kind schema.
     Tracks already-handled external events to ensure idempotency.
     """
-    id: Optional[str] = None   # Firestore document ID
+    id: Optional[int | str] = None   # Datastore document ID
     event_id: str

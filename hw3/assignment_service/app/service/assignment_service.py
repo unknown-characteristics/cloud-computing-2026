@@ -1,6 +1,5 @@
 import json
 import uuid
-from datetime import datetime, timezone
 
 from fastapi import HTTPException, status
 
@@ -23,13 +22,13 @@ class AssignmentService:
         self._repo = AssignmentRepository()
         self._outbox_repo = OutboxRepository()
 
-    async def create_assignment(self, dto: CreateAssignmentDTO) -> AssignmentResponseDTO:
+    def create_assignment(self, dto: CreateAssignmentDTO) -> AssignmentResponseDTO:
         assignment = Assignment(**dto.model_dump())
-        created = await self._repo.create(assignment)
+        created = self._repo.create(assignment)
 
         # Write to outbox for reliable Pub/Sub delivery
-        await self._outbox_repo.create(OutboxEvent(
-            data=json.dumps({"assignment_id": created.id, "name": created.name}),
+        self._outbox_repo.create(OutboxEvent(
+            data=json.dumps({"assignment_id": created.id, "name": created.name, "creator_id": created.creator_id}),
             event_id=str(uuid.uuid4()),
             event_type="assignment.created",
             pending=True,
@@ -37,28 +36,28 @@ class AssignmentService:
 
         return self._to_response(created)
 
-    async def delete_assignment(self, assignment_id: str) -> None:
-        assignment = await self._repo.get_by_id(assignment_id)
+    def delete_assignment(self, assignment_id: str) -> None:
+        assignment = self._repo.get_by_id(assignment_id)
         if not assignment:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assignment not found")
 
-        deleted = await self._repo.delete(assignment_id)
+        deleted = self._repo.delete(assignment_id)
         if not deleted:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to delete assignment")
 
-        await self._outbox_repo.create(OutboxEvent(
-            data=json.dumps({"assignment_id": assignment_id}),
+        self._outbox_repo.create(OutboxEvent(
+            data=json.dumps({"assignment_id": assignment_id, "name": assignment.name, "creator_id": assignment.creator_id}),
             event_id=str(uuid.uuid4()),
             event_type="assignment.deleted",
             pending=True,
         ))
 
-    async def get_assignments(self) -> list[AssignmentResponseDTO]:
-        assignments = await self._repo.get_all()
+    def get_assignments(self) -> list[AssignmentResponseDTO]:
+        assignments = self._repo.get_all()
         return [self._to_response(a) for a in assignments]
 
-    async def edit_assignment(self, assignment_id: str, dto: EditAssignmentDTO) -> AssignmentResponseDTO:
-        assignment = await self._repo.get_by_id(assignment_id)
+    def edit_assignment(self, assignment_id: str, dto: EditAssignmentDTO) -> AssignmentResponseDTO:
+        assignment = self._repo.get_by_id(assignment_id)
         if not assignment:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assignment not found")
 
@@ -66,9 +65,9 @@ class AssignmentService:
         if not fields:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No fields provided to update")
 
-        updated = await self._repo.update(assignment_id, fields)
+        updated = self._repo.update(assignment_id, fields)
 
-        await self._outbox_repo.create(OutboxEvent(
+        self._outbox_repo.create(OutboxEvent(
             data=json.dumps({"assignment_id": assignment_id, "updated_fields": list(fields.keys())}),
             event_id=str(uuid.uuid4()),
             event_type="assignment.updated",
@@ -77,16 +76,16 @@ class AssignmentService:
 
         return self._to_response(updated)
 
-    async def deadline_reached(self) -> list[AssignmentResponseDTO]:
+    def deadline_reached(self) -> list[AssignmentResponseDTO]:
         """Returns all assignments whose submission deadline has passed."""
-        assignments = await self._repo.get_past_deadline()
+        assignments = self._repo.get_past_deadline()
         return [self._to_response(a) for a in assignments]
 
-    async def get_leaderboard(self) -> LeaderboardResponseDTO:
-        return await self.compute_leaderboard()
+    def get_leaderboard(self) -> LeaderboardResponseDTO:
+        return self.compute_leaderboard()
 
-    async def compute_leaderboard(self) -> LeaderboardResponseDTO:
-        assignments = await self._repo.get_all_ordered_by_submissions()
+    def compute_leaderboard(self) -> LeaderboardResponseDTO:
+        assignments = self._repo.get_all_ordered_by_submissions()
         entries = [
             LeaderboardEntryDTO(
                 assignment_id=a.id,
@@ -101,7 +100,7 @@ class AssignmentService:
     @staticmethod
     def _to_response(assignment: Assignment) -> AssignmentResponseDTO:
         return AssignmentResponseDTO(
-            id=assignment.id,
+            id=str(assignment.id),
             creator_id=assignment.creator_id,
             description=assignment.description,
             name=assignment.name,

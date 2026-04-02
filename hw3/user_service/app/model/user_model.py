@@ -9,3 +9,4 @@ class User(Base):
     email = Column(String(255), unique=True, index=True, nullable=False) 
     hashed_password = Column(String(255), nullable=False)
     credibility_score = Column(Integer, default=1)
+    created_assignments_count = Column(Integer, nullable=False, default=0)
