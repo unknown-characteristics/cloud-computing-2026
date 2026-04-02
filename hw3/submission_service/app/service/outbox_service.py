@@ -2,21 +2,36 @@ from app.dtos.outbox_dto import PendingEventsResponseDTO
 from app.repository.outbox_repo import OutboxRepository
 from app.helpers.pubsub_helper import publish_message
 
+
 class OutboxService:
     def __init__(self):
         self._repo = OutboxRepository()
 
-    async def process_pending(self) -> PendingEventsResponseDTO:
-        events = await self._repo.get_pending()
-        pub, fail = [], []
+    async def process_pending_events(self) -> PendingEventsResponseDTO:
+        """
+        Fetches all pending outbox events and publishes them to Pub/Sub.
+        Marks each event as non-pending after successful publish.
+        """
+        pending = self._repo.get_pending()
+        published = []
+        failed = []
 
-        for e in events:
+        for event in pending:
             try:
-                await publish_message(data=e.data, event_type=e.event_type, event_id=e.event_id)
-                await self._repo.mark_as_published(e.id)
-                pub.append(e.event_id)
+                await publish_message(
+                    data=event.data,
+                    event_type=event.event_type,
+                    event_id=event.event_id,
+                )
+                self._repo.mark_as_published(event.id)
+                published.append(event.event_id)
             except Exception as exc:
-                print(f"[Outbox] Fail on {e.event_id}: {exc}")
-                fail.append(e.event_id)
+                # Log and continue — don't let one failure block others
+                print(f"[OutboxService] Failed to publish event {event.event_id}: {exc}")
+                failed.append(event.event_id)
 
-        return PendingEventsResponseDTO(published=pub, failed=fail, total_processed=len(events))
+        return PendingEventsResponseDTO(
+            published=published,
+            failed=failed,
+            total_processed=len(pending),
+        )

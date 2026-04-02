@@ -100,7 +100,7 @@ class AssignmentService:
     @staticmethod
     def _to_response(assignment: Assignment) -> AssignmentResponseDTO:
         return AssignmentResponseDTO(
-            id=str(assignment.id),
+            id=assignment.id,
             creator_id=assignment.creator_id,
             description=assignment.description,
             name=assignment.name,
