@@ -6,3 +6,8 @@ cryptography
 pyjwt
 passlib[bcrypt]
 pydantic[email]
+google-cloud-secret-manager
+python-dotenv
+authlib
+gunicorn
+pydantic-settings

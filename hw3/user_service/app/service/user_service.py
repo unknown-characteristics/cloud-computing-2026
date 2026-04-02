@@ -1,8 +1,8 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from user_service.app.dtos.user_dto import UserRegister, UserLogin, UserResponse
-from user_service.app.repository import user_repo
-from user_service.app.core import security
+from dtos.user_dto import UserRegister, UserLogin, UserResponse
+from repository import user_repo
+from core import security
 
 def register_new_user(user_in: UserRegister, db: Session) -> UserResponse:
     if user_repo.get_user_by_email(db, user_in.email):
