@@ -17,7 +17,7 @@ PROJECT_ID = os.environ.get("GOOGLE_CLOUD_PROJECT")
 # Global cache for the Public Key string
 _public_key_cache = None
 
-def get_cloud_run_service_url(service_name: str, region: str = "europe-west1"):
+def get_cloud_run_service_url(service_name: str, region: str):
     """
     Programmatically retrieves the URL of a Cloud Run service.
     """
@@ -35,6 +35,7 @@ def get_cloud_run_service_url(service_name: str, region: str = "europe-west1"):
         return None
 
 USERS_SERVICE_URL = get_cloud_run_service_url("users-service", "europe-west1")
+ASSIGNMENTS_SERVICE_URL = get_cloud_run_service_url("assignments-service", "europe-west1")
 
 def get_secret_payload(secret_id: str, version_id: str = "latest"):
     """Fetches a secret from Google Secret Manager."""
@@ -98,7 +99,8 @@ async def proxy_request(request: Request, path: str, service_url: str, user: dic
             headers=headers,
             content=await request.body(),
             params=request.query_params,
-            timeout=15.0
+            timeout=15.0,
+            follow_redirects=True
         )
 
     excluded_headers = {"content-length", "content-encoding", "transfer-encoding", "connection"}
@@ -115,4 +117,8 @@ async def proxy_request(request: Request, path: str, service_url: str, user: dic
 
 @app.api_route("/api/users/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
 async def users_proxy(request: Request, path: str, user: dict | None = Depends(validate_user_jwt)):
-    return await proxy_request(request, f"/users/{path}", USERS_SERVICE_URL, user)
+    return await proxy_request(request, f"users/{path}", USERS_SERVICE_URL, user)
+
+@app.api_route("/api/assignments/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+async def assignments_proxy(request: Request, path: str, user: dict | None = Depends(validate_user_jwt)):
+    return await proxy_request(request, f"assignments/{path}", ASSIGNMENTS_SERVICE_URL, user)

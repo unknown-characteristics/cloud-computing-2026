@@ -1,11 +1,11 @@
-from app.dtos.outbox_dto import PendingEventsResponseDTO
-from app.repository.outbox_repository import OutboxRepository
-from app.helpers.pubsub_helper import publish_message
-
+from dtos.outbox_dto import PendingEventsResponseDTO
+from repository.outbox_repository import OutboxRepository
+from helpers.pubsub_helper import publish_message
+from sqlalchemy.orm import Session
 
 class OutboxService:
-    def __init__(self):
-        self._repo = OutboxRepository()
+    def __init__(self, session: Session):
+        self._repo = OutboxRepository(session)
 
     async def process_pending_events(self) -> PendingEventsResponseDTO:
         """
@@ -23,7 +23,7 @@ class OutboxService:
                     event_type=event.event_type,
                     event_id=event.event_id,
                 )
-                self._repo.mark_as_published(event.id)
+                self._repo.mark_as_published(event)
                 published.append(event.event_id)
             except Exception as exc:
                 # Log and continue — don't let one failure block others

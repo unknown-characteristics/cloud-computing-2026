@@ -2,12 +2,12 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    SERVICE_NAME: str = "assignment-service"
-    FIRESTORE_PROJECT_ID: str = "your-gcp-project-id"
-    PUBSUB_TOPIC: str = "assignment-events"
+    SERVICE_NAME: str
+    PROJECT_ID: str
+    PUBSUB_TOPIC: str
 
     class Config:
-        env_file = ".env"
+        env_file = "settings.env"
 
 
 settings = Settings()

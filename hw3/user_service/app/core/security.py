@@ -23,7 +23,7 @@ def create_access_token(data: dict) -> str:
     to_encode.update({
         "iat": datetime.now(timezone.utc),
         "exp": expire, 
-        "aud": settings.cloud_project_id, 
+        "aud": settings.project_id, 
         "iss": os.environ.get("SERVICE_URL")
     })
     

@@ -5,9 +5,9 @@ from pydantic import BaseModel, Field
 
 class Assignment(BaseModel):
     """
-    Mirrors the Firestore 'assignments' kind schema.
+    Mirrors the Datastore 'assignments' kind schema.
     """
-    id: Optional[str] = None                        # Firestore document ID (auto-generated)
+    id: Optional[int | str] = None                        # Datastore document ID (auto-generated)
     created_at: Optional[datetime] = None
     creator_id: int
     description: str

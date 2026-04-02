@@ -11,3 +11,4 @@ python-dotenv
 authlib
 uvicorn
 pydantic-settings
+google-cloud-pubsub

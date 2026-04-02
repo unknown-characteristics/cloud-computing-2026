@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 
 class CreateAssignmentDTO(BaseModel):
-    creator_id: int
+    creator_id: int | None = None
     description: str
     name: str
     start_time: datetime

@@ -1,4 +1,5 @@
-from fastapi import APIRouter, status
+from fastapi import APIRouter, status, Depends, HTTPException
+from app.helpers.user_helper import extract_user_token
 
 from app.dtos.assignment_dto import (
     CreateAssignmentDTO,
@@ -18,8 +19,13 @@ _service = AssignmentService()
     status_code=status.HTTP_201_CREATED,
     summary="Create a new assignment",
 )
-async def create_assignment(dto: CreateAssignmentDTO) -> AssignmentResponseDTO:
-    return await _service.create_assignment(dto)
+async def create_assignment(dto: CreateAssignmentDTO, user_token: dict | None = Depends(extract_user_token)) -> AssignmentResponseDTO:
+    if not user_token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You must be logged in to perform this action")
+    
+    dto.creator_id = int(user_token["sub"])
+    
+    return _service.create_assignment(dto)
 
 
 @router.delete(
@@ -28,7 +34,7 @@ async def create_assignment(dto: CreateAssignmentDTO) -> AssignmentResponseDTO:
     summary="Delete an assignment by ID",
 )
 async def delete_assignment(assignment_id: str) -> None:
-    await _service.delete_assignment(assignment_id)
+    _service.delete_assignment(assignment_id)
 
 
 @router.get(
@@ -38,7 +44,7 @@ async def delete_assignment(assignment_id: str) -> None:
     summary="Get all assignments",
 )
 async def get_assignments() -> list[AssignmentResponseDTO]:
-    return await _service.get_assignments()
+    return _service.get_assignments()
 
 
 @router.patch(
@@ -48,7 +54,7 @@ async def get_assignments() -> list[AssignmentResponseDTO]:
     summary="Edit an existing assignment",
 )
 async def edit_assignment(assignment_id: str, dto: EditAssignmentDTO) -> AssignmentResponseDTO:
-    return await _service.edit_assignment(assignment_id, dto)
+    return _service.edit_assignment(assignment_id, dto)
 
 
 @router.get(
@@ -58,7 +64,7 @@ async def edit_assignment(assignment_id: str, dto: EditAssignmentDTO) -> Assignm
     summary="Get all assignments whose submission deadline has passed",
 )
 async def deadline_reached() -> list[AssignmentResponseDTO]:
-    return await _service.deadline_reached()
+    return _service.deadline_reached()
 
 
 @router.get(
@@ -68,4 +74,4 @@ async def deadline_reached() -> list[AssignmentResponseDTO]:
     summary="Get the assignment leaderboard ranked by submission count",
 )
 async def get_leaderboard() -> LeaderboardResponseDTO:
-    return await _service.get_leaderboard()
+    return _service.get_leaderboard()
