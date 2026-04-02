@@ -3,7 +3,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 class Rating(BaseModel):
-    id: Optional[str] = None
+    id: Optional[int | str] = None
     user_id: int
     submission_id: str
     assignment_id: str

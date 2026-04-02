@@ -36,6 +36,7 @@ def get_cloud_run_service_url(service_name: str, region: str):
 
 USERS_SERVICE_URL = get_cloud_run_service_url("users-service", "europe-west1")
 ASSIGNMENTS_SERVICE_URL = get_cloud_run_service_url("assignments-service", "europe-west1")
+SUBMISSIONS_SERVICE_URL = get_cloud_run_service_url("submissions-service", "europe-west1")
 
 def get_secret_payload(secret_id: str, version_id: str = "latest"):
     """Fetches a secret from Google Secret Manager."""
@@ -122,3 +123,7 @@ async def users_proxy(request: Request, path: str, user: dict | None = Depends(v
 @app.api_route("/api/assignments/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
 async def assignments_proxy(request: Request, path: str, user: dict | None = Depends(validate_user_jwt)):
     return await proxy_request(request, f"assignments/{path}", ASSIGNMENTS_SERVICE_URL, user)
+
+@app.api_route("/api/submissions/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+async def submissions_proxy(request: Request, path: str, user: dict | None = Depends(validate_user_jwt)):
+    return await proxy_request(request, f"submissions/{path}", SUBMISSIONS_SERVICE_URL, user)

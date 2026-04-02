@@ -1,34 +1,42 @@
 from typing import Optional
-from google.cloud import firestore
-from app.core.firestore_client import get_firestore_client
+from google.cloud import datastore
 from app.models.rating import Rating
 from app.helpers.datetime_helpers import utcnow
 
 class RatingRepository:
     def __init__(self):
-        self._db = get_firestore_client()
-        self._collection = self._db.collection("ratings")
+        self._client = datastore.Client()
+        self._kind = "rating"
 
-    async def create(self, rating: Rating) -> Rating:
+    def create(self, rating: Rating) -> Rating:
         rating.created_at = rating.updated_at = utcnow()
-        doc_ref = self._collection.document()
-        await doc_ref.set(rating.model_dump(exclude={"id"}))
-        rating.id = doc_ref.id
+        key = self._client.key(self._kind)
+        entity = datastore.Entity(key=key)
+        entity.update(rating.model_dump(exclude={"id"}))
+        self._client.put(entity)
+        rating.id = str(entity.key.id)
         return rating
 
-    async def get_by_id(self, rating_id: str) -> Optional[Rating]:
-        doc = await self._collection.document(rating_id).get()
-        if not doc.exists or doc.to_dict().get("status") == "deleted":
+    def get_by_id(self, rating_id: str) -> Optional[Rating]:
+        key = self._client.key(self._kind, int(rating_id))
+        entity = self._client.get(key)
+        if not entity or entity.get("status") == "deleted":
             return None
-        return Rating(id=doc.id, **doc.to_dict())
+        return Rating(id=str(entity.key.id), **entity)
 
-    async def get_active_by_submission(self, submission_id: str) -> list[Rating]:
-        docs = self._collection.where("submission_id", "==", submission_id).where("status", "==", "active").stream()
-        return [Rating(id=doc.id, **doc.to_dict()) async for doc in docs]
+    def get_active_by_submission(self, submission_id: str) -> list[Rating]:
+        query = self._client.query(kind=self._kind)
+        query.add_filter("submission_id", "=", submission_id)
+        query.add_filter("status", "=", "active")
+        entities = list(query.fetch())
+        return [Rating(id=str(e.key.id), **e) for e in entities]
 
-    async def update(self, rating_id: str, fields: dict) -> Rating:
+    def update(self, rating_id: str, fields: dict) -> Rating:
         fields["updated_at"] = utcnow()
-        doc_ref = self._collection.document(rating_id)
-        await doc_ref.update(fields)
-        updated = await doc_ref.get()
-        return Rating(id=updated.id, **updated.to_dict())
+        key = self._client.key(self._kind, int(rating_id))
+        entity = self._client.get(key)
+        if not entity:
+            raise ValueError(f"Rating with id {rating_id} not found")
+        entity.update(fields)
+        self._client.put(entity)
+        return Rating(id=str(entity.key.id), **entity)

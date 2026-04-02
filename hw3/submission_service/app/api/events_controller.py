@@ -1,6 +1,7 @@
 from fastapi import APIRouter, status, Request
 
-router = APIRouter(prefix="/events", tags=["Events"])
+router = APIRouter()
+
 
 @router.post(
     "/receive",
