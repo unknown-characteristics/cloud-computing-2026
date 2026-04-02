@@ -9,5 +9,5 @@ pydantic[email]
 google-cloud-secret-manager
 python-dotenv
 authlib
-gunicorn
+uvicorn
 pydantic-settings

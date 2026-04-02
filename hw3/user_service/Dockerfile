@@ -11,4 +11,4 @@ WORKDIR /app
 
 RUN mv settings-env settings.env
 
-CMD ["sh", "-c", "exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 main:app"]
+CMD ["sh", "-c", "exec uvicorn main:app --host 0.0.0.0 --port $PORT"]

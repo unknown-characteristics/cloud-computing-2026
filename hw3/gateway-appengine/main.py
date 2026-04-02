@@ -1,7 +1,7 @@
 import os
 import httpx
 from fastapi import FastAPI, Request, HTTPException, Depends
-from fastapi.responses import JSONResponse
+from fastapi.responses import Response
 from jose import jwt
 from google.cloud import secretmanager, run_v2
 from google.auth.transport.requests import Request as GoogleAuthRequest
@@ -21,7 +21,6 @@ def get_cloud_run_service_url(service_name: str, region: str = "europe-west1"):
     """
     Programmatically retrieves the URL of a Cloud Run service.
     """
-    print("ID = " + PROJECT_ID)
     client = run_v2.ServicesClient()
     
     # Construct the parent resource name
@@ -74,21 +73,23 @@ async def validate_user_jwt(request: Request):
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Invalid Token: {str(e)}")
 
-@app.api_route("/api/users/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
-async def gateway_proxy(request: Request, path: str, user: dict | None = Depends(validate_user_jwt)):
+async def proxy_request(request: Request, path: str, service_url: str, user: dict | None):
     # 1. Get Google OIDC token for Cloud Run IAM
     auth_req = GoogleAuthRequest()
-    google_token = id_token.fetch_id_token(auth_req, USERS_SERVICE_URL)
+    google_token = id_token.fetch_id_token(auth_req, service_url)
 
     # 2. Proxy request
-    backend_url = f"{USERS_SERVICE_URL}/users/{path}"
-    print("URL = " + backend_url)
-    headers = dict(request.headers)
+    backend_url = f"{service_url}/users/{path}"
+
+    forbidden = {"authorization", "host", "content-length", "connection"}
+    headers = {
+        k: v for k, v in request.headers.items() 
+        if k.lower() not in forbidden
+    }
+    
     headers["Authorization"] = f"Bearer {google_token}"
-    headers.pop("X-User-Token", None)
     if user != None:
         headers["X-User-Token"] = base64.b64encode(json.dumps(user).encode("utf-8")).decode("utf-8") # Pass user info forward
-    headers.pop("host", None)
 
     async with httpx.AsyncClient() as client:
         proxy_resp = await client.request(
@@ -96,7 +97,22 @@ async def gateway_proxy(request: Request, path: str, user: dict | None = Depends
             url=backend_url,
             headers=headers,
             content=await request.body(),
-            params=request.query_params
+            params=request.query_params,
+            timeout=15.0
         )
 
-    return JSONResponse(content=proxy_resp.json(), status_code=proxy_resp.status_code)
+    excluded_headers = {"content-length", "content-encoding", "transfer-encoding", "connection"}
+    
+    return Response(
+        content=proxy_resp.content,
+        status_code=proxy_resp.status_code,
+        headers={
+            key: value for key, value in proxy_resp.headers.items() 
+            if key.lower() not in excluded_headers
+        },
+        media_type=proxy_resp.headers.get("content-type")
+    )
+
+@app.api_route("/api/users/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+async def users_proxy(request: Request, path: str, user: dict | None = Depends(validate_user_jwt)):
+    return await proxy_request(request, path, USERS_SERVICE_URL, user)

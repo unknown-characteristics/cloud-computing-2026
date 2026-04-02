@@ -1,10 +1,11 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from helpers.db_creds import db_creds
+from helpers.settings import settings
 
 SQLALCHEMY_DATABASE_URL = (
     f"mysql+pymysql://{db_creds.db_user}:{db_creds.db_passwd}"
-    f"@{db_creds.db_connection_ip}:3306/{db_creds.db_name}"
+    f"@/{db_creds.db_name}?unix_socket=/cloudsql/{settings.cloud_project_id}:us-central1:{db_creds.db_name}"
 )
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL, pool_pre_ping=True)
