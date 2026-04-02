@@ -79,7 +79,7 @@ async def proxy_request(request: Request, path: str, service_url: str, user: dic
     google_token = id_token.fetch_id_token(auth_req, service_url)
 
     # 2. Proxy request
-    backend_url = f"{service_url}/users/{path}"
+    backend_url = f"{service_url}/{path}"
 
     forbidden = {"authorization", "host", "content-length", "connection"}
     headers = {
@@ -115,4 +115,4 @@ async def proxy_request(request: Request, path: str, service_url: str, user: dic
 
 @app.api_route("/api/users/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
 async def users_proxy(request: Request, path: str, user: dict | None = Depends(validate_user_jwt)):
-    return await proxy_request(request, path, USERS_SERVICE_URL, user)
+    return await proxy_request(request, f"/users/{path}", USERS_SERVICE_URL, user)
