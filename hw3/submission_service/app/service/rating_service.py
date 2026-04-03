@@ -53,7 +53,7 @@ class RatingService:
         rating = self._repo.get_by_id(rating_id)
         if not rating:
             raise HTTPException(status_code=404, detail="Rating not found")
-        if rating.user_id != user_id:
+        if rating.user_id != user_id and user_id != -1:
             raise HTTPException(status_code=403, detail="Not authorized to delete this rating")
 
         self._repo.update(rating_id, {"status": "deleted", "deleted_at": utcnow()})

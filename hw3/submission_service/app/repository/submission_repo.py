@@ -20,7 +20,8 @@ class SubmissionRepository:
         key = self._build_key(sub.user_id, sub.assignment_id)
 
         # Prevent overwrite (optional but recommended)
-        if self._client.get(key):
+        old = self._client.get(key)
+        if old is not None and old["status"] != "deleted":
             raise ValueError(
                 f"Submission already exists for user_id={sub.user_id} "
                 f"and assignment_id={sub.assignment_id}"

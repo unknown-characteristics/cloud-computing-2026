@@ -9,6 +9,7 @@ from app.helpers.datetime_helpers import utcnow
 from app.core.storage_client import get_storage_client
 from app.core.config import settings
 from app.service.outbox_service import OutboxService
+from app.service.rating_service import RatingService
 
 class SubmissionService:
     def __init__(self):
@@ -91,6 +92,12 @@ class SubmissionService:
             raise HTTPException(status_code=403, detail="Not authorized to delete this submission")
 
         self._repo.update(sub_id, {"status": "deleted", "deleted_at": utcnow()})
+
+        rating_service = RatingService()
+        results = rating_service.get_by_submission(sub_id)
+        for r in results:
+            await rating_service.delete(r.id, -1)
+        
         self._log_event(sub_id, sub.assignment_id, "submission.deleted")
         await OutboxService().process_pending_events()
 
