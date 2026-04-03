@@ -1,11 +1,13 @@
 import json, uuid
-from fastapi import HTTPException
-from app.dtos.submission_dto import CreateSubmissionDTO, UpdateSubmissionDTO, SubmissionResponseDTO
+from fastapi import HTTPException, UploadFile
+from app.dtos.submission_dto import SubmissionResponseDTO
 from app.models.submission import Submission
 from app.models.outbox import OutboxEvent
 from app.repository.submission_repo import SubmissionRepository
 from app.repository.outbox_repo import OutboxRepository
 from app.helpers.datetime_helpers import utcnow
+from app.core.storage_client import get_storage_client
+from app.core.config import settings
 
 
 class SubmissionService:
@@ -13,35 +15,76 @@ class SubmissionService:
         self._repo = SubmissionRepository()
         self._outbox = OutboxRepository()
 
-    def create(self, dto: CreateSubmissionDTO) -> SubmissionResponseDTO:
-        sub = self._repo.create(Submission(**dto.model_dump()))
-        self._log_event(sub.id, sub.assignment_id, "submission.created")
+    async def create(self, assignment_id: str, user_id: int, file: UploadFile) -> SubmissionResponseDTO:
+        client = get_storage_client()
+        bucket = client.bucket(settings.GCS_BUCKET_NAME)
+        ext = file.filename.split(".")[-1] if file.filename and "." in file.filename else "bin"
+        filename = f"submissions/{assignment_id}/{user_id}_{uuid.uuid4().hex}.{ext}"
+
+        blob = bucket.blob(filename)
+        content = await file.read()
+        blob.upload_from_string(content, content_type=file.content_type)
+
+        sub = await self._repo.create(Submission(
+            user_id=user_id,
+            assignment_id=assignment_id,
+            filepath=filename
+        ))
+        await self._log_event(sub.id, sub.assignment_id, "submission.created")
         return SubmissionResponseDTO(**sub.model_dump())
 
-    def get_all_by_assignment(self, assignment_id: str) -> list[SubmissionResponseDTO]:
-        subs = self._repo.get_all_active_by_assignment(assignment_id)
+    async def get_all_by_assignment(self, assignment_id: str) -> list[SubmissionResponseDTO]:
+        subs = await self._repo.get_all_active_by_assignment(assignment_id)
         return [SubmissionResponseDTO(**s.model_dump()) for s in subs]
 
-    def update(self, sub_id: str, dto: UpdateSubmissionDTO) -> SubmissionResponseDTO:
-        if not self._repo.get_by_id(sub_id):
-            raise HTTPException(status_code=404, detail="Submission not found")
-
-        fields = dto.model_dump(exclude_none=True)
-        updated = self._repo.update(sub_id, fields)
-        self._log_event(sub_id, updated.assignment_id, "submission.updated", fields)
-        return SubmissionResponseDTO(**updated.model_dump())
-
-    def delete(self, sub_id: str) -> None:
-        sub = self._repo.get_by_id(sub_id)
+    async def get_file(self, sub_id: str) -> tuple[bytes, str, str]:
+        sub = await self._repo.get_by_id(sub_id)
         if not sub:
             raise HTTPException(status_code=404, detail="Submission not found")
 
-        self._repo.update(sub_id, {"status": "deleted", "deleted_at": utcnow()})
-        self._log_event(sub_id, sub.assignment_id, "submission.deleted")
+        client = get_storage_client()
+        bucket = client.bucket(settings.GCS_BUCKET_NAME)
+        blob = bucket.blob(sub.filepath)
+        if not blob.exists():
+            raise HTTPException(status_code=404, detail="File not found in storage")
 
-    def _log_event(self, sub_id: str, assign_id: str, ev_type: str, extra: dict = None):
+        file_bytes = blob.download_as_bytes()
+        original_name = sub.filepath.split("/")[-1]
+        return file_bytes, blob.content_type or "application/octet-stream", original_name
+
+    async def update(self, sub_id: str, file: UploadFile, user_id: int) -> SubmissionResponseDTO:
+        sub = await self._repo.get_by_id(sub_id)
+        if not sub:
+            raise HTTPException(status_code=404, detail="Submission not found")
+        if sub.user_id != user_id:
+            raise HTTPException(status_code=403, detail="Not authorized to edit this submission")
+
+        client = get_storage_client()
+        bucket = client.bucket(settings.GCS_BUCKET_NAME)
+        ext = file.filename.split(".")[-1] if file.filename and "." in file.filename else "bin"
+        filename = f"submissions/{sub.assignment_id}/{user_id}_{uuid.uuid4().hex}.{ext}"
+
+        blob = bucket.blob(filename)
+        content = await file.read()
+        blob.upload_from_string(content, content_type=file.content_type)
+
+        updated = await self._repo.update(sub_id, {"filepath": filename})
+        await self._log_event(sub_id, updated.assignment_id, "submission.updated", {"filepath": filename})
+        return SubmissionResponseDTO(**updated.model_dump())
+
+    async def delete(self, sub_id: str, user_id: int) -> None:
+        sub = await self._repo.get_by_id(sub_id)
+        if not sub:
+            raise HTTPException(status_code=404, detail="Submission not found")
+        if sub.user_id != user_id:
+            raise HTTPException(status_code=403, detail="Not authorized to delete this submission")
+
+        await self._repo.update(sub_id, {"status": "deleted", "deleted_at": utcnow()})
+        await self._log_event(sub_id, sub.assignment_id, "submission.deleted")
+
+    async def _log_event(self, sub_id: str, assign_id: str, ev_type: str, extra: dict = None):
         data = {"submission_id": sub_id, "assignment_id": assign_id}
         if extra: data.update(extra)
-        self._outbox.create(OutboxEvent(
+        await self._outbox.create(OutboxEvent(
             data=json.dumps(data), event_id=str(uuid.uuid4()), event_type=ev_type, pending=True
         ))
