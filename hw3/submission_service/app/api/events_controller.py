@@ -1,6 +1,5 @@
-from fastapi import APIRouter, status, Request, Depends
-from core.database import get_db
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, status, Request
+from app.repository import other_event_repo
 import base64, json
 from app.service import submission_service
 
@@ -8,7 +7,7 @@ router = APIRouter()
 
 def _mark_event_as_handled(event_id: str):
     # create other event in order to mark it as handled
-    repo = other_event_repository.OtherEventRepository()
+    repo = other_event_repo.OtherEventRepository()
     repo.create(event_id)
 
 @router.post(
@@ -16,7 +15,7 @@ def _mark_event_as_handled(event_id: str):
     status_code=status.HTTP_200_OK,
     summary="Receive events from Pub/Sub",
 )
-async def receive_event(request: Request, db: Session = Depends(get_db)):
+async def receive_event(request: Request):
     event = await request.json()
 
     b64data = event["message"]["data"]

@@ -5,7 +5,7 @@ from pydantic import BaseModel
 class Rating(BaseModel):
     id: Optional[int] = None
     user_id: int
-    submission_id: str
+    submission_id: int
     assignment_id: int
     score: int
     comment: Optional[str] = None

@@ -20,7 +20,7 @@ async def get_by_assignment(assignment_id: int, user_token: dict = Depends(extra
 
 @router.get("/{sub_id}/file", summary="Download submission file")
 async def get_file(sub_id: int, user_token: dict = Depends(extract_user_token)):
-    file_bytes, content_type, filename = await _service.get_file(sub_id)
+    file_bytes, content_type, filename = _service.get_file(sub_id)
     headers = {"Content-Disposition": f'attachment; filename="{filename}"'}
     return Response(content=file_bytes, media_type=content_type, headers=headers)
 
@@ -34,4 +34,4 @@ async def update(
 
 @router.delete("/{sub_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete(sub_id: int, user_token: dict = Depends(extract_user_token)):
-    _service.delete(sub_id, user_token["sub"]["id"])
+    await _service.delete(sub_id, user_token["sub"]["id"])
