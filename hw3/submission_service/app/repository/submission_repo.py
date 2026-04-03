@@ -41,3 +41,16 @@ class SubmissionRepository:
         entity.update(fields)
         self._client.put(entity)
         return Submission(id=str(entity.key.id), **entity)
+
+    def get_all(self):
+        query = self.client.query(kind=self.kind)
+        results = list(query.fetch())
+
+        submissions = []
+        for r in results:
+            sub = Submission(**r)
+            # Datastore pune ID-ul in key, trebuie sa il scoatem
+            sub.id = str(r.key.id) if r.key.id else r.key.name
+            submissions.append(sub)
+
+        return submissions

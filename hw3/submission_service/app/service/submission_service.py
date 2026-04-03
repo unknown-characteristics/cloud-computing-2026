@@ -91,3 +91,23 @@ class SubmissionService:
         self._outbox.create(OutboxEvent(
             data=json.dumps(data), event_id=str(uuid.uuid4()), event_type=ev_type, pending=True
         ))
+
+    def get_all_submissions(self):
+        submissions = self.repo.get_all()
+        result = []
+
+        for sub in submissions:
+            # Ascundem submisiile care au fost sterse (soft delete)
+            if sub.status != "deleted":
+                result.append(
+                    SubmissionResponseDTO(
+                        id=str(sub.id),
+                        user_id=sub.user_id,
+                        assignment_id=sub.assignment_id,
+                        filepath=sub.filepath,
+                        status=sub.status,
+                        created_at=sub.created_at,
+                        updated_at=sub.updated_at
+                    )
+                )
+        return result

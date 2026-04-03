@@ -11,6 +11,7 @@ import PageTransition from './components/PageTransition'
 import ProtectedRoute from './components/ProtectedRoute'
 import Dashboard from './pages/Dashboard'
 import AssignmentDetails from './pages/AssignmentDetails'
+import SubmissionsList from './pages/SubmissionsList'
 import Profile from './pages/Profile'
 
 export default function App() {
@@ -60,6 +61,15 @@ export default function App() {
               </PageTransition>
             }
           />
+
+            <Route
+                path="/submissions"
+                element={
+                <PageTransition>
+                <SubmissionsList />
+                </PageTransition>
+            }
+            />
 
           {/* 404 */}
           <Route
