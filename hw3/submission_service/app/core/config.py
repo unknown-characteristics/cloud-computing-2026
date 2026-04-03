@@ -4,6 +4,7 @@ class Settings(BaseSettings):
     SERVICE_NAME: str = "submission-service"
     FIRESTORE_PROJECT_ID: str = "cloudcomputing-491711"
     PUBSUB_TOPIC: str = "submission-events"
+    GCS_BUCKET_NAME: str = "submissions-bucket-491711"
 
     class Config:
         env_file = ".env"

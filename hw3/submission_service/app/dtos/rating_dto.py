@@ -3,7 +3,6 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 class CreateRatingDTO(BaseModel):
-    user_id: int
     submission_id: str
     assignment_id: str
     score: int = Field(..., ge=1, le=5)

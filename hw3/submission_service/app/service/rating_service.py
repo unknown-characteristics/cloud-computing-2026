@@ -8,19 +8,20 @@ from app.repository.outbox_repo import OutboxRepository
 from app.repository.submission_repo import SubmissionRepository
 from app.helpers.datetime_helpers import utcnow
 
-
 class RatingService:
     def __init__(self):
         self._repo = RatingRepository()
         self._sub_repo = SubmissionRepository()
         self._outbox = OutboxRepository()
 
-    async def create(self, dto: CreateRatingDTO) -> RatingResponseDTO:
-        # Validare: submisia trebuie să existe și să fie activă
+    async def create(self, dto: CreateRatingDTO, user_id: int) -> RatingResponseDTO:
         if not await self._sub_repo.get_by_id(dto.submission_id):
             raise HTTPException(status_code=404, detail="Submission not found")
 
-        rating = await self._repo.create(Rating(**dto.model_dump()))
+        rating_data = dto.model_dump()
+        rating_data["user_id"] = user_id
+
+        rating = await self._repo.create(Rating(**rating_data))
         await self._log_event(rating.id, rating.submission_id, "rating.created")
         return RatingResponseDTO(**rating.model_dump())
 
@@ -28,19 +29,24 @@ class RatingService:
         ratings = await self._repo.get_active_by_submission(sub_id)
         return [RatingResponseDTO(**r.model_dump()) for r in ratings]
 
-    async def update(self, rating_id: str, dto: UpdateRatingDTO) -> RatingResponseDTO:
-        if not await self._repo.get_by_id(rating_id):
+    async def update(self, rating_id: str, dto: UpdateRatingDTO, user_id: int) -> RatingResponseDTO:
+        rating = await self._repo.get_by_id(rating_id)
+        if not rating:
             raise HTTPException(status_code=404, detail="Rating not found")
+        if rating.user_id != user_id:
+            raise HTTPException(status_code=403, detail="Not authorized to edit this rating")
 
         fields = dto.model_dump(exclude_none=True)
         updated = await self._repo.update(rating_id, fields)
         await self._log_event(rating_id, updated.submission_id, "rating.updated", fields)
         return RatingResponseDTO(**updated.model_dump())
 
-    async def delete(self, rating_id: str) -> None:
+    async def delete(self, rating_id: str, user_id: int) -> None:
         rating = await self._repo.get_by_id(rating_id)
         if not rating:
             raise HTTPException(status_code=404, detail="Rating not found")
+        if rating.user_id != user_id:
+            raise HTTPException(status_code=403, detail="Not authorized to delete this rating")
 
         await self._repo.update(rating_id, {"status": "deleted", "deleted_at": utcnow()})
         await self._log_event(rating_id, rating.submission_id, "rating.deleted")
