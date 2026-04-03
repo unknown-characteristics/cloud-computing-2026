@@ -7,8 +7,8 @@ from app.dtos.assignment_dto import (
     CreateAssignmentDTO,
     EditAssignmentDTO,
     AssignmentResponseDTO,
-    LeaderboardEntryDTO,
-    LeaderboardResponseDTO,
+    # LeaderboardEntryDTO,
+    # LeaderboardResponseDTO,
 )
 from app.models.assignment import Assignment
 from app.models.outbox import OutboxEvent
@@ -27,7 +27,7 @@ class AssignmentService:
 
     async def create_assignment(self, dto: CreateAssignmentDTO) -> AssignmentResponseDTO:
         assignment = Assignment(**dto.model_dump())
-
+        assignment.status = "active"
         with self._client.transaction():
             created = self._repo.create(assignment)
 
@@ -39,21 +39,21 @@ class AssignmentService:
                 pending=True,
             ))
 
-        # --- Schedule Cloud Tasks for the two deadlines ---
- 
-        # Task 1: fires at stop_submit_time
-        schedule_task(
-            url_path=f"/assignments/check-deadline/{created.id}",
-            payload={"deadline_type": "stop_submit"},
-            schedule_time=created.stop_submit_time,
-        )
+            # --- Schedule Cloud Tasks for the two deadlines ---
     
-        # Task 2: fires at stop_grade_time
-        schedule_task(
-            url_path=f"/assignments/check-deadline/{created.id}",
-            payload={"deadline_type": "stop_grade"},
-            schedule_time=created.stop_grade_time,
-        )
+            # Task 1: fires at stop_submit_time
+            schedule_task(
+                url_path=f"/assignments/check-deadline/{created.id}",
+                payload={"deadline_type": "stop_submit"},
+                schedule_time=created.stop_submit_time,
+            )
+        
+            # Task 2: fires at stop_grade_time
+            schedule_task(
+                url_path=f"/assignments/check-deadline/{created.id}",
+                payload={"deadline_type": "stop_grade"},
+                schedule_time=created.stop_grade_time,
+            )
         
         await OutboxService().process_pending_events()
 
@@ -79,6 +79,10 @@ class AssignmentService:
 
     def get_assignments(self) -> list[AssignmentResponseDTO]:
         assignments = self._repo.get_all()
+        return [self._to_response(a) for a in assignments]
+
+    def get_assignments_by_creator_id(self, creator_id: int) -> list[AssignmentResponseDTO]:
+        assignments = self._repo.get_all_by_creator_id(creator_id)
         return [self._to_response(a) for a in assignments]
 
     def get_assignment_by_id(self, assignment_id: int) -> AssignmentResponseDTO:
@@ -107,26 +111,21 @@ class AssignmentService:
         await OutboxService().process_pending_events()
         return self._to_response(updated)
 
-    def deadline_reached(self) -> list[AssignmentResponseDTO]:
-        """Returns all assignments whose submission deadline has passed."""
-        assignments = self._repo.get_past_deadline()
-        return [self._to_response(a) for a in assignments]
+    # def get_leaderboard(self) -> LeaderboardResponseDTO:
+    #     return self.compute_leaderboard()
 
-    def get_leaderboard(self) -> LeaderboardResponseDTO:
-        return self.compute_leaderboard()
-
-    def compute_leaderboard(self) -> LeaderboardResponseDTO:
-        assignments = self._repo.get_all_ordered_by_submissions()
-        entries = [
-            LeaderboardEntryDTO(
-                assignment_id=a.id,
-                name=a.name,
-                submission_count=a.submission_count,
-                rank=idx + 1,
-            )
-            for idx, a in enumerate(assignments)
-        ]
-        return LeaderboardResponseDTO(entries=entries, total=len(entries))
+    # def compute_leaderboard(self) -> LeaderboardResponseDTO:
+    #     assignments = self._repo.get_all_ordered_by_submissions()
+    #     entries = [
+    #         LeaderboardEntryDTO(
+    #             assignment_id=a.id,
+    #             name=a.name,
+    #             submission_count=a.submission_count,
+    #             rank=idx + 1,
+    #         )
+    #         for idx, a in enumerate(assignments)
+    #     ]
+    #     return LeaderboardResponseDTO(entries=entries, total=len(entries))
 
     @staticmethod
     def _to_response(assignment: Assignment) -> AssignmentResponseDTO:

@@ -1,4 +1,4 @@
-from assignment_service.app.repository.assignment_repository import AssignmentRepository
+from app.repository.assignment_repository import AssignmentRepository
 from fastapi import APIRouter, status, Depends, HTTPException
 from app.helpers.user_helper import extract_user_token
 from datetime import datetime, timezone
@@ -8,13 +8,13 @@ from app.dtos.assignment_dto import (
     CreateAssignmentDTO,
     EditAssignmentDTO,
     AssignmentResponseDTO,
-    LeaderboardResponseDTO,
+    # LeaderboardResponseDTO,
 )
 from app.models.assignment import CheckDeadlinePayload
 from app.models.outbox import OutboxEvent
 from app.service.assignment_service import AssignmentService
-from user_service.app.repository.outbox_repository import OutboxRepository
-from user_service.app.service.outbox_service import OutboxService
+from app.repository.outbox_repository import OutboxRepository
+from app.service.outbox_service import OutboxService
 
 router = APIRouter()
 _service = AssignmentService()
@@ -78,25 +78,14 @@ async def get_assignments() -> list[AssignmentResponseDTO]:
 async def edit_assignment(assignment_id: int, dto: EditAssignmentDTO) -> AssignmentResponseDTO:
     return await _service.edit_assignment(assignment_id, dto)
 
-
-@router.get(
-    "/deadline-reached",
-    response_model=list[AssignmentResponseDTO],
-    status_code=status.HTTP_200_OK,
-    summary="Get all assignments whose submission deadline has passed",
-)
-async def deadline_reached() -> list[AssignmentResponseDTO]:
-    return _service.deadline_reached()
-
-
-@router.get(
-    "/leaderboard",
-    response_model=LeaderboardResponseDTO,
-    status_code=status.HTTP_200_OK,
-    summary="Get the assignment leaderboard ranked by submission count",
-)
-async def get_leaderboard() -> LeaderboardResponseDTO:
-    return _service.get_leaderboard()
+# @router.get(
+#     "/leaderboard",
+#     response_model=LeaderboardResponseDTO,
+#     status_code=status.HTTP_200_OK,
+#     summary="Get the assignment leaderboard ranked by submission count",
+# )
+# async def get_leaderboard() -> LeaderboardResponseDTO:
+#     return _service.get_leaderboard()
 
 @router.post(
     "/check-deadline/{assignment_id}",

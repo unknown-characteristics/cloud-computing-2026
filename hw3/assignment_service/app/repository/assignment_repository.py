@@ -52,6 +52,18 @@ class AssignmentRepository:
                 Assignment(id=entity.key.id or entity.key.name, **dict(entity))
             )
         return assignments
+    
+    def get_all_by_creator_id(self, creator_id: int) -> list[Assignment]:
+        query = self._db.query(kind=KIND)
+        query.add_filter("creator_id", "=", creator_id)
+        results = query.fetch()
+
+        assignments = []
+        for entity in results:
+            assignments.append(
+                Assignment(id=entity.key.id or entity.key.name, **dict(entity))
+            )
+        return assignments
 
     def update(self, assignment_id: int, fields: dict) -> Optional[Assignment]:
         key = self._key(assignment_id)

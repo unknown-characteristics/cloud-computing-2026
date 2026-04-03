@@ -11,7 +11,7 @@ class UpdateSubmissionDTO(BaseModel):
     filepath: Optional[str] = None
 
 class SubmissionResponseDTO(BaseModel):
-    id: int
+    id: str
     user_id: int
     assignment_id: int
     filepath: str

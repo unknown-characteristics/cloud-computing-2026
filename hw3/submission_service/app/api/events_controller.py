@@ -1,7 +1,7 @@
-from fastapi import APIRouter, status, Request
+from fastapi import APIRouter, status, Request, HTTPException
 from app.repository import other_event_repo
 import base64, json
-from app.service import submission_service
+from app.service.submission_service import SubmissionService
 
 router = APIRouter()
 
@@ -9,6 +9,8 @@ def _mark_event_as_handled(event_id: str):
     # create other event in order to mark it as handled
     repo = other_event_repo.OtherEventRepository()
     repo.create(event_id)
+
+_service = SubmissionService()
 
 @router.post(
     "/receive",
@@ -27,14 +29,26 @@ async def receive_event(request: Request):
     
     if event_json["event_type"] == "assignment.deleted":
         assignment_id = event_data["assignment_id"]
-        submissions = submission_service.get_all_by_assignment(assignment_id)
+        submissions = _service.get_all_by_assignment(assignment_id)
         for sub in submissions:
-            submission_service.delete_submission(sub.id)
+            try:
+                await _service.delete(sub.id, -1)
+            except HTTPException as e:
+                if e.status_code == 404:
+                    pass
+                else:
+                    raise e
         _mark_event_as_handled(event_json["event_id"])
         
     elif event_json["event_type"] == "user.deleted":
         # delete all submissions created by the deleted user
-        user_submissions = submission_service.get_submissions_by_user_id(event_data["user_id"])
+        user_submissions = _service.get_all_by_user(event_data["id"])
         for sub in user_submissions:
-            submission_service.delete_submission(sub.id)
+            try:
+                await _service.delete(sub.id, -1)
+            except HTTPException as e:
+                if e.status_code == 404:
+                    pass
+                else:
+                    raise e
         _mark_event_as_handled(event_json["event_id"])

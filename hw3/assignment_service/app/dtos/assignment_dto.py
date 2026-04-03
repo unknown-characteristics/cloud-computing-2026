@@ -7,7 +7,7 @@ class CreateAssignmentDTO(BaseModel):
     creator_id: int | None = None
     description: str
     name: str
-    status: str
+    status: str = "active"
     start_time: datetime
     stop_grade_time: datetime
     stop_submit_time: datetime
@@ -45,7 +45,7 @@ class EditAssignmentDTO(BaseModel):
 
 
 class AssignmentResponseDTO(BaseModel):
-    id: str | int
+    id: int
     creator_id: int
     description: str
     name: str
@@ -59,13 +59,13 @@ class AssignmentResponseDTO(BaseModel):
     updated_at: Optional[datetime] = None
 
 
-class LeaderboardEntryDTO(BaseModel):
-    assignment_id: str | int
-    name: str
-    submission_count: int
-    rank: int
+# class LeaderboardEntryDTO(BaseModel):
+#     assignment_id: int
+#     name: str
+#     submission_count: int
+#     rank: int
 
 
-class LeaderboardResponseDTO(BaseModel):
-    entries: list[LeaderboardEntryDTO]
-    total: int
+# class LeaderboardResponseDTO(BaseModel):
+#     entries: list[LeaderboardEntryDTO]
+#     total: int
