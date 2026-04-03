@@ -22,16 +22,21 @@ class RatingService:
         rating_data = dto.model_dump()
         rating_data["user_id"] = user_id
 
-        rating = self._repo.create(Rating(**rating_data))
+        try:
+            rating = self._repo.create(Rating(**rating_data))
+        except ValueError as e:
+            if "Rating already exists" in e.args[0]:
+                raise HTTPException(status_code=400, detail=e.args[0])
+
         self._log_event(rating.id, rating.submission_id, "rating.created")
         await OutboxService().process_pending_events()
         return RatingResponseDTO(**rating.model_dump())
 
-    def get_by_submission(self, sub_id: int) -> list[RatingResponseDTO]:
+    def get_by_submission(self, sub_id: str) -> list[RatingResponseDTO]:
         ratings = self._repo.get_active_by_submission(sub_id)
         return [RatingResponseDTO(**r.model_dump()) for r in ratings]
 
-    async def update(self, rating_id: int, dto: UpdateRatingDTO, user_id: int) -> RatingResponseDTO:
+    async def update(self, rating_id: str, dto: UpdateRatingDTO, user_id: int) -> RatingResponseDTO:
         rating = self._repo.get_by_id(rating_id)
         if not rating:
             raise HTTPException(status_code=404, detail="Rating not found")
@@ -44,7 +49,7 @@ class RatingService:
         await OutboxService().process_pending_events()
         return RatingResponseDTO(**updated.model_dump())
 
-    async def delete(self, rating_id: int, user_id: int) -> None:
+    async def delete(self, rating_id: str, user_id: int) -> None:
         rating = self._repo.get_by_id(rating_id)
         if not rating:
             raise HTTPException(status_code=404, detail="Rating not found")
@@ -55,7 +60,7 @@ class RatingService:
         self._log_event(rating_id, rating.submission_id, "rating.deleted")
         await OutboxService().process_pending_events()
 
-    def _log_event(self, rating_id: int, sub_id: int, ev_type: str, extra: dict = None):
+    def _log_event(self, rating_id: str, sub_id: str, ev_type: str, extra: dict = None):
         data = {"rating_id": rating_id, "submission_id": sub_id}
         if extra: data.update(extra)
         self._outbox.create(OutboxEvent(

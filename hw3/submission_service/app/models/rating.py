@@ -3,9 +3,9 @@ from typing import Optional
 from pydantic import BaseModel
 
 class Rating(BaseModel):
-    id: Optional[int] = None
+    id: Optional[str] = None
     user_id: int
-    submission_id: int
+    submission_id: str
     assignment_id: int
     score: int
     comment: Optional[str] = None
