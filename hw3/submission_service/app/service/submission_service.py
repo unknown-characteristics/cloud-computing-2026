@@ -15,7 +15,7 @@ class SubmissionService:
         self._repo = SubmissionRepository()
         self._outbox = OutboxRepository()
 
-    async def create(self, assignment_id: str, user_id: int, file: UploadFile) -> SubmissionResponseDTO:
+    async def create(self, assignment_id: int, user_id: int, file: UploadFile) -> SubmissionResponseDTO:
         client = get_storage_client()
         bucket = client.bucket(settings.GCS_BUCKET_NAME)
         ext = file.filename.split(".")[-1] if file.filename and "." in file.filename else "bin"
@@ -34,11 +34,11 @@ class SubmissionService:
         OutboxService().process_pending_events()
         return SubmissionResponseDTO(**sub.model_dump())
 
-    def get_all_by_assignment(self, assignment_id: str) -> list[SubmissionResponseDTO]:
+    def get_all_by_assignment(self, assignment_id: int) -> list[SubmissionResponseDTO]:
         subs = self._repo.get_all_active_by_assignment(assignment_id)
         return [SubmissionResponseDTO(**s.model_dump()) for s in subs]
 
-    def get_file(self, sub_id: str) -> tuple[bytes, str, str]:
+    def get_file(self, sub_id: int) -> tuple[bytes, str, str]:
         sub = self._repo.get_by_id(sub_id)
         if not sub:
             raise HTTPException(status_code=404, detail="Submission not found")
@@ -53,7 +53,7 @@ class SubmissionService:
         original_name = sub.filepath.split("/")[-1]
         return file_bytes, blob.content_type or "application/octet-stream", original_name
 
-    async def update(self, sub_id: str, file: UploadFile, user_id: int) -> SubmissionResponseDTO:
+    async def update(self, sub_id: int, file: UploadFile, user_id: int) -> SubmissionResponseDTO:
         sub = self._repo.get_by_id(sub_id)
         if not sub:
             raise HTTPException(status_code=404, detail="Submission not found")
@@ -74,7 +74,7 @@ class SubmissionService:
         OutboxService().process_pending_events()
         return SubmissionResponseDTO(**updated.model_dump())
 
-    def delete(self, sub_id: str, user_id: int) -> None:
+    def delete(self, sub_id: int, user_id: int) -> None:
         sub = self._repo.get_by_id(sub_id)
         if not sub:
             raise HTTPException(status_code=404, detail="Submission not found")
@@ -85,7 +85,7 @@ class SubmissionService:
         self._log_event(sub_id, sub.assignment_id, "submission.deleted")
         OutboxService().process_pending_events()
 
-    def _log_event(self, sub_id: str, assign_id: str, ev_type: str, extra: dict = None):
+    def _log_event(self, sub_id: int, assign_id: str, ev_type: str, extra: dict = None):
         data = {"submission_id": sub_id, "assignment_id": assign_id}
         if extra: data.update(extra)
         self._outbox.create(OutboxEvent(

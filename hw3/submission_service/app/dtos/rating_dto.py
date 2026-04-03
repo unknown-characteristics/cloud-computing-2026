@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 class CreateRatingDTO(BaseModel):
     submission_id: str
-    assignment_id: str
+    assignment_id: int
     score: int = Field(..., ge=1, le=5)
     comment: Optional[str] = None
 
@@ -16,7 +16,7 @@ class RatingResponseDTO(BaseModel):
     id: str
     user_id: int
     submission_id: str
-    assignment_id: str
+    assignment_id: int
     score: int
     comment: Optional[str]
     status: str
