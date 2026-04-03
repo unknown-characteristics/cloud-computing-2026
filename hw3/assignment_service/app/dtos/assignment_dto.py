@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 
 class CreateAssignmentDTO(BaseModel):
-    creator_id: int
+    creator_id: int | None = None
     description: str
     name: str
     start_time: datetime
@@ -44,7 +44,7 @@ class EditAssignmentDTO(BaseModel):
 
 
 class AssignmentResponseDTO(BaseModel):
-    id: str
+    id: str | int
     creator_id: int
     description: str
     name: str
@@ -58,7 +58,7 @@ class AssignmentResponseDTO(BaseModel):
 
 
 class LeaderboardEntryDTO(BaseModel):
-    assignment_id: str
+    assignment_id: str | int
     name: str
     submission_count: int
     rank: int

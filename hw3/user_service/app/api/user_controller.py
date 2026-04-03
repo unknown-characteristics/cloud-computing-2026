@@ -24,3 +24,8 @@ async def login(user: UserLogin, response: Response, db: Session = Depends(get_d
     )
     
     return {"message": "Login successful"}
+
+@router.delete("/{user_id}")
+async def login(user_id: int, response: Response, db: Session = Depends(get_db)):
+    user_service.delete_user(user_id, db)
+    response.status_code = 204

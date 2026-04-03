@@ -1,16 +1,9 @@
 #!/bin/bash
 
-# Numele proiectului si regiunea (ajusteaza daca folosești o alta)
-PROJECT_ID="cloudcomputing-491711"
-REGION="europe-west1"
-SERVICE_NAME="submission-service"
-
-# Face deploy la containerul Docker în Cloud Run
-gcloud run deploy $SERVICE_NAME \
+gcloud run deploy submissions-service \
   --source . \
-  --region $REGION \
-  --project $PROJECT_ID \
-  --allow-unauthenticated \
-  --set-env-vars FIRESTORE_PROJECT_ID=$PROJECT_ID,PUBSUB_TOPIC="submission-events"
+  --region europe-west1 \
+  --no-allow-unauthenticated \
+  --set-env-vars PROJECT_ID=cloudcomputing-491711,PUBSUB_TOPIC=submissions-events
 
 echo "Deployed successfully!"

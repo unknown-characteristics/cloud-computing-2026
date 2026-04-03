@@ -1,6 +1,6 @@
 import json
 from google.cloud import pubsub_v1
-from app.core.config import settings
+from helpers.settings import settings
 
 _publisher: pubsub_v1.PublisherClient | None = None
 
@@ -14,7 +14,7 @@ def get_publisher() -> pubsub_v1.PublisherClient:
 
 def get_topic_path() -> str:
     publisher = get_publisher()
-    return publisher.topic_path(settings.PROJECT_ID, settings.PUBSUB_TOPIC)
+    return publisher.topic_path(settings.project_id, settings.pubsub_topic)
 
 
 async def publish_message(data: str, event_type: str, event_id: str) -> str:

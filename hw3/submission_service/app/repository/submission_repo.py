@@ -1,34 +1,42 @@
 from typing import Optional
-from google.cloud import firestore
-from app.core.firestore_client import get_firestore_client
+from google.cloud import datastore
 from app.models.submission import Submission
 from app.helpers.datetime_helpers import utcnow
 
 class SubmissionRepository:
     def __init__(self):
-        self._db = get_firestore_client()
-        self._collection = self._db.collection("submissions")
+        self._client = datastore.Client()
+        self._kind = "submission"
 
-    async def create(self, sub: Submission) -> Submission:
+    def create(self, sub: Submission) -> Submission:
         sub.created_at = sub.updated_at = utcnow()
-        doc_ref = self._collection.document()
-        await doc_ref.set(sub.model_dump(exclude={"id"}))
-        sub.id = doc_ref.id
+        key = self._client.key(self._kind)
+        entity = datastore.Entity(key=key)
+        entity.update(sub.model_dump(exclude={"id"}))
+        self._client.put(entity)
+        sub.id = str(entity.key.id)
         return sub
 
-    async def get_by_id(self, sub_id: str) -> Optional[Submission]:
-        doc = await self._collection.document(sub_id).get()
-        if not doc.exists or doc.to_dict().get("status") == "deleted":
+    def get_by_id(self, sub_id: str) -> Optional[Submission]:
+        key = self._client.key(self._kind, int(sub_id))
+        entity = self._client.get(key)
+        if not entity or entity.get("status") == "deleted":
             return None
-        return Submission(id=doc.id, **doc.to_dict())
+        return Submission(id=str(entity.key.id), **entity)
 
-    async def get_all_active_by_assignment(self, assignment_id: str) -> list[Submission]:
-        docs = self._collection.where("assignment_id", "==", assignment_id).where("status", "==", "active").stream()
-        return [Submission(id=doc.id, **doc.to_dict()) async for doc in docs]
+    def get_all_active_by_assignment(self, assignment_id: str) -> list[Submission]:
+        query = self._client.query(kind=self._kind)
+        query.add_filter("assignment_id", "=", assignment_id)
+        query.add_filter("status", "=", "active")
+        entities = list(query.fetch())
+        return [Submission(id=str(e.key.id), **e) for e in entities]
 
-    async def update(self, sub_id: str, fields: dict) -> Submission:
+    def update(self, sub_id: str, fields: dict) -> Submission:
         fields["updated_at"] = utcnow()
-        doc_ref = self._collection.document(sub_id)
-        await doc_ref.update(fields)
-        updated = await doc_ref.get()
-        return Submission(id=updated.id, **updated.to_dict())
+        key = self._client.key(self._kind, int(sub_id))
+        entity = self._client.get(key)
+        if not entity:
+            raise ValueError(f"Submission with id {sub_id} not found")
+        entity.update(fields)
+        self._client.put(entity)
+        return Submission(id=str(entity.key.id), **entity)

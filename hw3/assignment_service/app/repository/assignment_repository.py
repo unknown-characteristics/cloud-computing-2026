@@ -1,83 +1,103 @@
 from datetime import datetime, timezone
 from typing import Optional
 
-from google.cloud import firestore
+from google.cloud import datastore
 
-from app.core.firestore_client import get_firestore_client
+from app.core.datastore_client import get_datastore_client
 from app.models.assignment import Assignment
 
-COLLECTION = "assignments"
-
+KIND = "assignment"
 
 class AssignmentRepository:
     def __init__(self):
-        self._db: firestore.AsyncClient = get_firestore_client()
+        self._db: datastore.Client = get_datastore_client()
 
-    @property
-    def _collection(self):
-        return self._db.collection(COLLECTION)
+    def _key(self, assignment_id: Optional[str] = None):
+        if assignment_id:
+            return self._db.key(KIND, assignment_id)
+        return self._db.key(KIND)
 
-    async def create(self, assignment: Assignment) -> Assignment:
+    def create(self, assignment: Assignment) -> Assignment:
         now = datetime.now(timezone.utc)
         assignment.created_at = now
         assignment.updated_at = now
 
+        key = self._key()
+        entity = datastore.Entity(key=key)
+
         data = assignment.model_dump(exclude={"id"})
-        doc_ref = self._collection.document()
-        await doc_ref.set(data)
-        assignment.id = doc_ref.id
+        entity.update(data)
+
+        self._db.put(entity)
+
+        assignment.id = entity.key.id or entity.key.name
         return assignment
 
-    async def get_by_id(self, assignment_id: str) -> Optional[Assignment]:
-        doc = await self._collection.document(assignment_id).get()
-        if not doc.exists:
+    def get_by_id(self, assignment_id: str) -> Optional[Assignment]:
+        key = self._key(assignment_id)
+        entity = self._db.get(key)
+        if not entity:
             return None
-        return Assignment(id=doc.id, **doc.to_dict())
 
-    async def get_all(self) -> list[Assignment]:
-        docs = self._collection.stream()
+        return Assignment(id=entity.key.id or entity.key.name, **dict(entity))
+
+    def get_all(self) -> list[Assignment]:
+        query = self._db.query(kind=KIND)
+        results = query.fetch()
+
         assignments = []
-        async for doc in docs:
-            assignments.append(Assignment(id=doc.id, **doc.to_dict()))
+        for entity in results:
+            assignments.append(
+                Assignment(id=entity.key.id or entity.key.name, **dict(entity))
+            )
         return assignments
 
-    async def update(self, assignment_id: str, fields: dict) -> Optional[Assignment]:
-        doc_ref = self._collection.document(assignment_id)
-        doc = await doc_ref.get()
-        if not doc.exists:
+    def update(self, assignment_id: str, fields: dict) -> Optional[Assignment]:
+        key = self._key(assignment_id)
+        entity = self._db.get(key)
+        if not entity:
             return None
-        fields["updated_at"] = datetime.now(timezone.utc)
-        await doc_ref.update(fields)
-        updated = await doc_ref.get()
-        return Assignment(id=updated.id, **updated.to_dict())
 
-    async def delete(self, assignment_id: str) -> bool:
-        doc_ref = self._collection.document(assignment_id)
-        doc = await doc_ref.get()
-        if not doc.exists:
+        fields["updated_at"] = datetime.now(timezone.utc)
+        entity.update(fields)
+
+        self._db.put(entity)
+
+        return Assignment(id=entity.key.id or entity.key.name, **dict(entity))
+
+    def delete(self, assignment_id: str) -> bool:
+        key = self._key(assignment_id)
+        entity = self._db.get(key)
+        if not entity:
             return False
-        await doc_ref.delete()
+
+        self._db.delete(key)
         return True
 
-    async def get_past_deadline(self) -> list[Assignment]:
+    def get_past_deadline(self) -> list[Assignment]:
         now = datetime.now(timezone.utc)
-        docs = (
-            self._collection
-            .where("stop_submit_time", "<=", now)
-            .stream()
-        )
+
+        query = self._db.query(kind=KIND)
+        query.add_filter("stop_submit_time", "<=", now)
+
+        results = query.fetch()
+
         assignments = []
-        async for doc in docs:
-            assignments.append(Assignment(id=doc.id, **doc.to_dict()))
+        for entity in results:
+            assignments.append(
+                Assignment(id=entity.key.id or entity.key.name, **dict(entity))
+            )
         return assignments
 
-    async def get_all_ordered_by_submissions(self) -> list[Assignment]:
-        docs = (
-            self._collection
-            .order_by("submission_count", direction=firestore.Query.DESCENDING)
-            .stream()
-        )
+    def get_all_ordered_by_submissions(self) -> list[Assignment]:
+        query = self._db.query(kind=KIND)
+        query.order = ["-submission_count"]  # descending
+
+        results = query.fetch()
+
         assignments = []
-        async for doc in docs:
-            assignments.append(Assignment(id=doc.id, **doc.to_dict()))
+        for entity in results:
+            assignments.append(
+                Assignment(id=entity.key.id or entity.key.name, **dict(entity))
+            )
         return assignments

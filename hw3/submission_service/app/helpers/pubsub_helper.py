@@ -12,7 +12,7 @@ def get_publisher() -> pubsub_v1.PublisherClient:
 
 async def publish_message(data: str, event_type: str, event_id: str) -> str:
     publisher = get_publisher()
-    topic_path = publisher.topic_path(settings.FIRESTORE_PROJECT_ID, settings.PUBSUB_TOPIC)
+    topic_path = publisher.topic_path(settings.PROJECT_ID, settings.PUBSUB_TOPIC)
     payload = json.dumps({"data": data, "event_type": event_type, "event_id": event_id}).encode("utf-8")
     future = publisher.publish(topic_path, payload, event_type=event_type, event_id=event_id)
     return future.result()

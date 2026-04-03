@@ -73,7 +73,7 @@ assignment_service/
 
 ```bash
 cp .env.example .env
-# Fill in FIRESTORE_PROJECT_ID and PUBSUB_TOPIC
+# Fill in PROJECT_ID and PUBSUB_TOPIC
 
 pip install -r requirements.txt
 uvicorn main:app --reload
