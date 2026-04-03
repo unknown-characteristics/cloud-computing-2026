@@ -41,7 +41,7 @@ class AssignmentService:
         await OutboxService().process_pending_events()
 
         return self._to_response(created)
-
+    
     async def delete_assignment(self, assignment_id: int) -> None:
         with self._client.transaction():
             assignment = self._repo.get_by_id(assignment_id)
@@ -118,6 +118,7 @@ class AssignmentService:
             creator_id=assignment.creator_id,
             description=assignment.description,
             name=assignment.name,
+            status=assignment.status,
             start_time=assignment.start_time,
             stop_grade_time=assignment.stop_grade_time,
             stop_submit_time=assignment.stop_submit_time,

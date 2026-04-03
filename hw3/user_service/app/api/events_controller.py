@@ -22,5 +22,6 @@ async def receive_event(request: Request, db: Session = Depends(get_db)):
 
     if event_json["event_type"] == "assignment.created":
         user_service.change_user_assignment_count(event_data["creator_id"], db, event_json["event_id"], True)
+        
     elif event_json["event_type"] == "assignment.deleted":
         user_service.change_user_assignment_count(event_data["creator_id"], db, event_json["event_id"], False)
