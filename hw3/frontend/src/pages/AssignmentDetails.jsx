@@ -14,7 +14,7 @@ import { format, isPast, isFuture, formatDistanceToNow } from 'date-fns'
 import { useAssignment, useDeleteAssignment } from '../hooks/useAssignments'
 import {
   useSubmissions, useUploadSubmission,
-  useUpdateSubmission, useDeleteSubmission, getFileDownloadUrl
+  useUpdateSubmission, useDeleteSubmission, downloadSubmissionFile
 } from '../hooks/useSubmissions'
 import { useRatings } from '../hooks/useRatings'
 import { useAuthStore } from '../store/authStore'
@@ -41,12 +41,11 @@ function TimeChip({ icon: Icon, label, date }) {
   )
 }
 
-// ── Submission row ───────────────────────────────────────────────────────────
 function SubmissionRow({ sub, currentUserId, assignmentId, onRate }) {
   const { mutate: deleteSub, isPending: isDeleting } = useDeleteSubmission()
+  const { mutate: updateSub, isPending: isUpdating } = useUpdateSubmission()
   const [editFile, setEditFile] = useState(null)
   const [showEdit, setShowEdit] = useState(false)
-  const { mutate: updateSub, isPending: isUpdating } = useUpdateSubmission()
   const { data: ratings = [] } = useRatings(sub.id)
 
   const isOwner = currentUserId && sub.user_id === currentUserId
@@ -65,64 +64,42 @@ function SubmissionRow({ sub, currentUserId, assignmentId, onRate }) {
   return (
     <motion.div layout className="py-3 border-b border-cyan-900/20 last:border-b-0">
       <div className="flex items-center justify-between gap-3">
-        {/* Left */}
         <div className="flex-1 min-w-0">
           <p className="text-sm text-slate-200 truncate font-mono">
             {sub.filename || `Submission #${sub.id}`}
+            {isOwner && <span className="ml-2 text-[10px] bg-cyan-500/20 text-cyan-400 px-2 py-0.5 rounded-full">Yours</span>}
           </p>
           <div className="flex items-center gap-3 mt-1">
             {avgScore && (
               <span className="flex items-center gap-1 text-xs text-amber-400">
                 <Star size={11} className="fill-amber-400" />
-                {avgScore}
-                <span className="text-slate-500">({ratings.length})</span>
+                {avgScore} <span className="text-slate-500">({ratings.length})</span>
               </span>
             )}
-            {sub.submitted_at && (
-              <span className="text-xs text-slate-500">
-                {formatDistanceToNow(new Date(sub.submitted_at), { addSuffix: true })}
-              </span>
-            )}
+            <span className="text-xs text-slate-500">
+              {/* AICI: Am inlocuit submitted_at cu created_at */}
+              {sub.created_at
+                ? formatDistanceToNow(new Date(sub.created_at), { addSuffix: true })
+                : 'Just now'}
+            </span>
           </div>
         </div>
 
-        {/* Actions */}
         <div className="flex items-center gap-1 shrink-0">
-          {/* Rate button */}
-          <button
-            onClick={() => onRate(sub)}
-            className="flex items-center gap-1 px-2.5 py-1.5 text-xs btn-ghost rounded-lg"
-          >
-            <Star size={12} />
-            Rate
+          <button onClick={() => onRate(sub)} className="flex items-center gap-1 px-2.5 py-1.5 text-xs btn-ghost rounded-lg">
+            <Star size={12} /> Rate
           </button>
 
-          {/* Download */}
-          <a
-            href={getFileDownloadUrl(sub.id)}
-            download
-            className="p-1.5 rounded-lg text-slate-500 hover:text-cyan-400 hover:bg-cyan-500/10 transition-colors"
-            title="Download"
-          >
+          <button onClick={() => downloadSubmissionFile(sub.id, sub.filename)} className="p-1.5 rounded-lg text-slate-500 hover:text-cyan-400 hover:bg-cyan-500/10 transition-colors" title="Download">
             <Download size={14} />
-          </a>
+          </button>
 
-          {/* Edit/Delete (owner only) */}
           {isOwner && (
             <>
-              <button
-                onClick={() => setShowEdit((v) => !v)}
-                className="p-1.5 rounded-lg text-slate-500 hover:text-cyan-400 hover:bg-cyan-500/10 transition-colors"
-                title="Edit submission"
-              >
+              <button onClick={() => setShowEdit(!showEdit)} className="p-1.5 rounded-lg text-slate-500 hover:text-cyan-400 hover:bg-cyan-500/10 transition-colors">
                 <Pencil size={14} />
               </button>
-              <button
-                onClick={() => deleteSub({ subId: sub.id, assignmentId })}
-                disabled={isDeleting}
-                className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
-                title="Delete"
-              >
+              <button onClick={() => deleteSub({ subId: sub.id, assignmentId })} disabled={isDeleting} className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors">
                 {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
               </button>
             </>
@@ -130,28 +107,15 @@ function SubmissionRow({ sub, currentUserId, assignmentId, onRate }) {
         </div>
       </div>
 
-      {/* Inline edit zone */}
       <AnimatePresence>
         {showEdit && (
-          <motion.div
-            className="mt-3 space-y-2"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-          >
-            <FileDropzone onFile={setEditFile} currentFile={editFile} label="Replace file" />
-            <div className="flex gap-2">
-              <button
-                onClick={handleUpdate}
-                disabled={!editFile || isUpdating}
-                className="btn-cyan text-xs px-3 py-1.5 flex items-center gap-1"
-              >
-                {isUpdating && <Loader2 size={12} className="animate-spin" />}
-                Upload New File
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mt-3 overflow-hidden">
+            <FileDropzone onFile={setEditFile} currentFile={editFile} label="Choose a new file to replace" />
+            <div className="flex gap-2 mt-2">
+              <button onClick={handleUpdate} disabled={!editFile || isUpdating} className="btn-cyan text-xs py-1.5 px-3 flex items-center gap-1">
+                {isUpdating ? <Loader2 size={12} className="animate-spin" /> : 'Save Changes'}
               </button>
-              <button onClick={() => setShowEdit(false)} className="btn-ghost text-xs px-3 py-1.5">
-                Cancel
-              </button>
+              <button onClick={() => setShowEdit(false)} className="btn-ghost text-xs py-1.5 px-3">Cancel</button>
             </div>
           </motion.div>
         )}
@@ -166,7 +130,8 @@ export default function AssignmentDetails() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
 
-  const { data: assignment, isLoading: loadingAssignment } = useAssignment(id)
+  // Am pastrat denumirile standard din react-query
+  const { data: assignment, isLoading, error } = useAssignment(id)
   const { data: submissions = [], isLoading: loadingSubs } = useSubmissions(id)
   const { mutate: deleteAssignment, isPending: isDeleting } = useDeleteAssignment()
   const { mutate: uploadSub, isPending: isUploading } = useUploadSubmission()
@@ -176,7 +141,8 @@ export default function AssignmentDetails() {
   const [ratedSub, setRatedSub]   = useState(null)
   const [newFile, setNewFile]     = useState(null)
 
-  if (loadingAssignment) {
+  // Acum folosim isLoading in loc de loadingAssignment
+  if (isLoading) {
     return (
       <div className="max-w-4xl mx-auto px-6 pt-24 space-y-4">
         <SkeletonLine w="48" h="8" />
@@ -186,11 +152,12 @@ export default function AssignmentDetails() {
     )
   }
 
-  if (!assignment) {
+  // Verificam daca e o eroare si nu s-a returnat niciun assignment
+  if (error || !assignment) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
         <AlertTriangle size={40} className="text-slate-600" />
-        <p className="text-slate-400">Assignment not found.</p>
+        <p className="text-slate-400">Assignment not found or error loading it.</p>
         <button onClick={() => navigate('/')} className="btn-ghost">← Back</button>
       </div>
     )
@@ -276,30 +243,34 @@ export default function AssignmentDetails() {
       </motion.div>
 
       {/* ── Submit section ───────────────────────────────────────────────── */}
-      {canSubmit && (
-        <motion.div
-          className="glass rounded-2xl p-6 mb-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          <h2 className="font-display font-semibold text-white mb-1 flex items-center gap-2">
-            <Upload size={16} className="text-cyan-400" />
-            {mySubmission ? 'Update Your Submission' : 'Submit Your Work'}
+      {/* ── Submit section ───────────────────────────────────────────────── */}
+      {canSubmit && !mySubmission && (
+        <motion.div className="glass rounded-2xl p-6 mb-6 border border-cyan-500/30 bg-cyan-950/10">
+          <h2 className="font-display font-semibold text-white mb-2 flex items-center gap-2">
+            <Upload size={18} className="text-cyan-400" />
+            Submit Your Solution
           </h2>
-          <p className="text-xs text-slate-500 mb-4">
-            Max 10 MB · any file type
-          </p>
+          <p className="text-xs text-slate-400 mb-4">You haven't submitted a solution yet. Upload your file below.</p>
+
           <FileDropzone onFile={setNewFile} currentFile={newFile} />
-          <button
-            onClick={handleUpload}
-            disabled={!newFile || isUploading}
-            className="btn-cyan mt-3 flex items-center gap-2"
-          >
-            {isUploading && <Loader2 size={14} className="animate-spin" />}
-            {mySubmission ? 'Replace Submission' : 'Upload Submission'}
-          </button>
+
+          <div className="flex justify-end mt-4">
+            <button onClick={handleUpload} disabled={!newFile || isUploading} className="btn-cyan flex items-center gap-2">
+              {isUploading ? <Loader2 size={16} className="animate-spin" /> : 'Submit Solution'}
+            </button>
+          </div>
         </motion.div>
+      )}
+
+      {/* Daca are deja o submisie, ii aratam un mesaj dragut (editarea se face direct din lista de mai jos) */}
+      {mySubmission && (
+         <div className="flex items-center justify-between px-4 py-3 mb-6 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+           <div className="flex items-center gap-2 text-emerald-400 text-sm">
+             <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+             You have already submitted a solution for this assignment.
+           </div>
+           <span className="text-xs text-slate-400">Edit or delete it from the list below.</span>
+         </div>
       )}
 
       {/* Submission deadline passed banner */}
