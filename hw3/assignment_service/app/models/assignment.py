@@ -22,3 +22,6 @@ class Assignment(BaseModel):
 
     class Config:
         json_encoders = {datetime: lambda v: v.isoformat()}
+
+class CheckDeadlinePayload(BaseModel):
+    deadline_type: str  # "stop_submit" or "stop_grade"

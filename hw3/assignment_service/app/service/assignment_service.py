@@ -17,6 +17,7 @@ from app.repository.outbox_repository import OutboxRepository
 from app.helpers.datetime_helpers import is_past
 from app.service.outbox_service import OutboxService
 from app.core.datastore_client import get_datastore_client
+from app.core.task_client import schedule_task
 
 class AssignmentService:
     def __init__(self):
@@ -38,6 +39,22 @@ class AssignmentService:
                 pending=True,
             ))
 
+        # --- Schedule Cloud Tasks for the two deadlines ---
+ 
+        # Task 1: fires at stop_submit_time
+        schedule_task(
+            url_path=f"/assignments/check-deadline/{created.id}",
+            payload={"deadline_type": "stop_submit"},
+            schedule_time=created.stop_submit_time,
+        )
+    
+        # Task 2: fires at stop_grade_time
+        schedule_task(
+            url_path=f"/assignments/check-deadline/{created.id}",
+            payload={"deadline_type": "stop_grade"},
+            schedule_time=created.stop_grade_time,
+        )
+        
         await OutboxService().process_pending_events()
 
         return self._to_response(created)
