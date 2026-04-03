@@ -11,6 +11,7 @@ class RatingRepository:
     def create(self, rating: Rating) -> Rating:
         rating.created_at = rating.updated_at = utcnow()
         key = self._client.key(self._kind)
+        key = self._client.allocate_ids(key, 1)[0]
         entity = datastore.Entity(key=key)
         entity.update(rating.model_dump(exclude={"id"}))
         self._client.put(entity)

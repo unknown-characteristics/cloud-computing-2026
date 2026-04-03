@@ -70,15 +70,18 @@ async def validate_user_jwt_optional(request: Request):
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
         return None
-
+    print("here")
     token = auth_header.split(" ")[1]
     public_key = await get_public_key()
     try:
         decoded_payload = jwt.decode(
             token, public_key, algorithms=["RS256"], audience=PROJECT_ID, issuer=USERS_SERVICE_URL
         )
+        print("yes")
         return decoded_payload
-    except Exception:
+    except Exception as e:
+        print("no")
+        print(e)
         return None
 
 
