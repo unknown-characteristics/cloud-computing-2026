@@ -8,7 +8,7 @@ import axios from 'axios'
 import { useAuthStore } from '../store/authStore'
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: import.meta.env.VITE_API_URL || 'https://gateway-dot-cloudcomputing-491711.wn.r.appspot.com/api',
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true, // also support HTTP-only cookies
 })
