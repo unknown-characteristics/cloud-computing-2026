@@ -1,7 +1,8 @@
 import os
 import httpx
 from fastapi import FastAPI, Request, HTTPException, Depends
-from fastapi.responses import Response
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import Response, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from jose import jwt
 from google.cloud import secretmanager, run_v2
@@ -45,7 +46,7 @@ def get_cloud_run_service_url(service_name: str, region: str = "europe-west1"):
 USERS_SERVICE_URL = get_cloud_run_service_url("users-service", "europe-west1")
 ASSIGNMENTS_SERVICE_URL = get_cloud_run_service_url("assignments-service", "europe-west1")
 SUBMISSIONS_SERVICE_URL = get_cloud_run_service_url("submissions-service", "europe-west1")
-RATINGS_SERVICE_URL = get_cloud_run_service_url("ratings-service", "europe-west1")  # Daca ai facut deploy la el separat
+RATINGS_SERVICE_URL = get_cloud_run_service_url("submissions-service", "europe-west1")
 
 
 def get_secret_payload(secret_id: str, version_id: str = "latest"):
@@ -145,3 +146,14 @@ async def submissions_proxy(request: Request, path: str, user: dict | None = Dep
 @app.api_route("/api/ratings/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
 async def ratings_proxy(request: Request, path: str, user: dict | None = Depends(validate_user_jwt_optional)):
     return await proxy_request(request, f"/ratings/{path}", RATINGS_SERVICE_URL, user)
+
+app.mount("/assets", StaticFiles(directory="dist/assets"), name="assets")
+
+# Catch-all route to serve React index.html
+@app.get("/{full_path:path}")
+def serve_react(full_path: str):
+    file_path = os.path.join("dist", full_path)
+    if os.path.isfile(file_path):
+        return FileResponse(file_path)
+    else:
+        return FileResponse("dist/index.html")

@@ -23,6 +23,7 @@ class AssignmentRepository:
         assignment.updated_at = now
 
         key = self._key()
+        key = self._db.allocate_ids(key, 1)[0]
         entity = datastore.Entity(key=key)
 
         data = assignment.model_dump(exclude={"id"})
@@ -33,7 +34,7 @@ class AssignmentRepository:
         assignment.id = entity.key.id or entity.key.name
         return assignment
 
-    def get_by_id(self, assignment_id: str) -> Optional[Assignment]:
+    def get_by_id(self, assignment_id: int) -> Optional[Assignment]:
         key = self._key(assignment_id)
         entity = self._db.get(key)
         if not entity:
@@ -52,7 +53,7 @@ class AssignmentRepository:
             )
         return assignments
 
-    def update(self, assignment_id: str, fields: dict) -> Optional[Assignment]:
+    def update(self, assignment_id: int, fields: dict) -> Optional[Assignment]:
         key = self._key(assignment_id)
         entity = self._db.get(key)
         if not entity:
@@ -65,7 +66,7 @@ class AssignmentRepository:
 
         return Assignment(id=entity.key.id or entity.key.name, **dict(entity))
 
-    def delete(self, assignment_id: str) -> bool:
+    def delete(self, assignment_id: int) -> bool:
         key = self._key(assignment_id)
         entity = self._db.get(key)
         if not entity:

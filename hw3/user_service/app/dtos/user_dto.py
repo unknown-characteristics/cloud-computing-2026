@@ -14,3 +14,4 @@ class UserResponse(BaseModel):
     name: str
     email: EmailStr
     credibility_score: int
+    created_assignments_count: int

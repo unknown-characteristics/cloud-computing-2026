@@ -15,65 +15,79 @@ from app.models.outbox import OutboxEvent
 from app.repository.assignment_repository import AssignmentRepository
 from app.repository.outbox_repository import OutboxRepository
 from app.helpers.datetime_helpers import is_past
-
+from app.service.outbox_service import OutboxService
+from app.core.datastore_client import get_datastore_client
 
 class AssignmentService:
     def __init__(self):
         self._repo = AssignmentRepository()
         self._outbox_repo = OutboxRepository()
+        self._client = get_datastore_client()
 
-    def create_assignment(self, dto: CreateAssignmentDTO) -> AssignmentResponseDTO:
+    async def create_assignment(self, dto: CreateAssignmentDTO) -> AssignmentResponseDTO:
         assignment = Assignment(**dto.model_dump())
-        created = self._repo.create(assignment)
 
-        # Write to outbox for reliable Pub/Sub delivery
-        self._outbox_repo.create(OutboxEvent(
-            data=json.dumps({"assignment_id": created.id, "name": created.name, "creator_id": created.creator_id}),
-            event_id=str(uuid.uuid4()),
-            event_type="assignment.created",
-            pending=True,
-        ))
+        with self._client.transaction():
+            created = self._repo.create(assignment)
+
+            # Write to outbox for reliable Pub/Sub delivery
+            self._outbox_repo.create(OutboxEvent(
+                data=json.dumps({"assignment_id": created.id, "name": created.name, "creator_id": created.creator_id}),
+                event_id=str(uuid.uuid4()),
+                event_type="assignment.created",
+                pending=True,
+            ))
+
+        await OutboxService().process_pending_events()
 
         return self._to_response(created)
 
-    def delete_assignment(self, assignment_id: str) -> None:
-        assignment = self._repo.get_by_id(assignment_id)
-        if not assignment:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assignment not found")
+    async def delete_assignment(self, assignment_id: int) -> None:
+        with self._client.transaction():
+            assignment = self._repo.get_by_id(assignment_id)
+            if not assignment:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assignment not found")
+            deleted = self._repo.delete(assignment_id)
+            if not deleted:
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to delete assignment")
 
-        deleted = self._repo.delete(assignment_id)
-        if not deleted:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to delete assignment")
+            self._outbox_repo.create(OutboxEvent(
+                data=json.dumps({"assignment_id": assignment_id, "name": assignment.name, "creator_id": assignment.creator_id}),
+                event_id=str(uuid.uuid4()),
+                event_type="assignment.deleted",
+                pending=True,
+            ))
 
-        self._outbox_repo.create(OutboxEvent(
-            data=json.dumps({"assignment_id": assignment_id, "name": assignment.name, "creator_id": assignment.creator_id}),
-            event_id=str(uuid.uuid4()),
-            event_type="assignment.deleted",
-            pending=True,
-        ))
+        await OutboxService().process_pending_events()
 
     def get_assignments(self) -> list[AssignmentResponseDTO]:
         assignments = self._repo.get_all()
         return [self._to_response(a) for a in assignments]
 
-    def edit_assignment(self, assignment_id: str, dto: EditAssignmentDTO) -> AssignmentResponseDTO:
+    def get_assignment_by_id(self, assignment_id: int) -> AssignmentResponseDTO:
         assignment = self._repo.get_by_id(assignment_id)
-        if not assignment:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assignment not found")
+        return self._to_response(assignment)
 
-        fields = dto.model_dump(exclude_none=True)
-        if not fields:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No fields provided to update")
+    async def edit_assignment(self, assignment_id: int, dto: EditAssignmentDTO) -> AssignmentResponseDTO:
+        with self._client.transaction():
+            assignment = self._repo.get_by_id(assignment_id)
+            if not assignment:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assignment not found")
 
-        updated = self._repo.update(assignment_id, fields)
+            fields = dto.model_dump(exclude_none=True)
+            if not fields:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No fields provided to update")
 
-        self._outbox_repo.create(OutboxEvent(
-            data=json.dumps({"assignment_id": assignment_id, "updated_fields": list(fields.keys())}),
-            event_id=str(uuid.uuid4()),
-            event_type="assignment.updated",
-            pending=True,
-        ))
+            updated = self._repo.update(assignment_id, fields)
 
+            self._outbox_repo.create(OutboxEvent(
+                data=json.dumps({"assignment_id": assignment_id, "status": updated.status}),
+                event_id=str(uuid.uuid4()),
+                event_type="assignment.updated",
+                pending=True,
+            ))
+
+        await OutboxService().process_pending_events()
         return self._to_response(updated)
 
     def deadline_reached(self) -> list[AssignmentResponseDTO]:
