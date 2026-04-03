@@ -1,39 +1,57 @@
-/**
- * Axios instance configured with:
- * - Base URL from env or /api proxy
- * - JWT Bearer token injected automatically from Zustand auth store
- * - 401 interceptor to clear auth state on expiry
- */
-import axios from 'axios'
-import { useAuthStore } from '../store/authStore'
+import axios from 'axios';
+import { useAuthStore } from '../store/authStore';
 
+// 1. Creăm instanța de bază
 const api = axios.create({
+  // Folosim variabila din .env sau link-ul direct ca fallback
   baseURL: import.meta.env.VITE_API_URL || 'https://gateway-dot-cloudcomputing-491711.wn.r.appspot.com/api',
-  headers: { 'Content-Type': 'application/json' },
-  withCredentials: true, // also support HTTP-only cookies
-})
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
-// ── Request interceptor: attach JWT ─────────────────────────────────────────
+// 2. INTERCEPTOR REQUEST (Se declanșează ÎNAINTE ca cererea să plece din browser)
 api.interceptors.request.use(
   (config) => {
-    const token = useAuthStore.getState().token
+    // Extragem starea curentă din Zustand fără a folosi un hook de React
+    const state = useAuthStore.getState();
+    const token = state.token;
+
+    // Dacă utilizatorul este logat și are token, îl atașăm la cerere
     if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`
+      config.headers.Authorization = `Bearer ${token}`;
     }
-    return config
+
+    return config;
   },
-  (error) => Promise.reject(error)
-)
-
-// ── Response interceptor: handle 401 ────────────────────────────────────────
-api.interceptors.response.use(
-  (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      useAuthStore.getState().logout()
-    }
-    return Promise.reject(error)
+    return Promise.reject(error);
   }
-)
+);
 
-export default api
+// 3. INTERCEPTOR RESPONSE (Se declanșează CÂND vine răspunsul de la server)
+api.interceptors.response.use(
+  (response) => {
+    // Dacă cererea a avut succes, pur și simplu o returnăm mai departe
+    return response;
+  },
+  (error) => {
+    // Dacă serverul a răspuns cu o eroare
+    if (error.response) {
+      // 401 înseamnă că token-ul lipsește, e invalid sau a expirat
+      if (error.response.status === 401) {
+        console.warn("Token expirat sau invalid. Delogare automată...");
+
+        // Apelăm funcția de logout din store-ul tău Zustand
+        const state = useAuthStore.getState();
+        if (state.logout) {
+          state.logout();
+        }
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+export default api;

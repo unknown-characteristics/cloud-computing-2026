@@ -166,7 +166,8 @@ export default function AssignmentDetails() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
 
-  const { data: assignment, isLoading: loadingAssignment } = useAssignment(id)
+  // Am pastrat denumirile standard din react-query
+  const { data: assignment, isLoading, error } = useAssignment(id)
   const { data: submissions = [], isLoading: loadingSubs } = useSubmissions(id)
   const { mutate: deleteAssignment, isPending: isDeleting } = useDeleteAssignment()
   const { mutate: uploadSub, isPending: isUploading } = useUploadSubmission()
@@ -176,7 +177,8 @@ export default function AssignmentDetails() {
   const [ratedSub, setRatedSub]   = useState(null)
   const [newFile, setNewFile]     = useState(null)
 
-  if (loadingAssignment) {
+  // Acum folosim isLoading in loc de loadingAssignment
+  if (isLoading) {
     return (
       <div className="max-w-4xl mx-auto px-6 pt-24 space-y-4">
         <SkeletonLine w="48" h="8" />
@@ -186,11 +188,12 @@ export default function AssignmentDetails() {
     )
   }
 
-  if (!assignment) {
+  // Verificam daca e o eroare si nu s-a returnat niciun assignment
+  if (error || !assignment) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
         <AlertTriangle size={40} className="text-slate-600" />
-        <p className="text-slate-400">Assignment not found.</p>
+        <p className="text-slate-400">Assignment not found or error loading it.</p>
         <button onClick={() => navigate('/')} className="btn-ghost">← Back</button>
       </div>
     )
