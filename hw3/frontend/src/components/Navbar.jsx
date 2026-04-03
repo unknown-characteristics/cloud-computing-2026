@@ -1,13 +1,12 @@
 /**
  * Global Navbar:
  * - Left: Logo + App Name
- * - Right: Avatar button -> dropdown (Profile / Logout) if logged in,
- *          or opens AuthModal if logged out
+ * - Right: Nav links + Avatar button -> dropdown (Profile / Logout)
  */
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { User, LogOut, LayoutDashboard, Zap, ChevronDown } from 'lucide-react'
+import { User, LogOut, LayoutDashboard, ListChecks, Zap, ChevronDown } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 
 export default function Navbar({ onOpenAuth }) {
@@ -56,15 +55,26 @@ export default function Navbar({ onOpenAuth }) {
         </Link>
 
         {/* ── Right side ────────────────────────── */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-6">
           {/* Nav links (desktop) */}
-          <Link
-            to="/"
-            className="hidden sm:flex items-center gap-1.5 text-sm text-slate-400 hover:text-cyan-400 transition-colors font-display"
-          >
-            <LayoutDashboard size={15} />
-            Dashboard
-          </Link>
+          <div className="hidden sm:flex items-center gap-5">
+            <Link
+              to="/"
+              className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-cyan-400 transition-colors font-display"
+            >
+              <LayoutDashboard size={15} />
+              Dashboard
+            </Link>
+
+            {/* NOU: Link către pagina globală de Submissions */}
+            <Link
+              to="/submissions"
+              className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-cyan-400 transition-colors font-display"
+            >
+              <ListChecks size={15} />
+              Submissions
+            </Link>
+          </div>
 
           {/* Avatar button + dropdown */}
           <div className="relative" ref={dropRef}>

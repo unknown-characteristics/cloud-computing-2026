@@ -17,16 +17,17 @@ export function useAssignments() {
 }
 
 // ── Fetch single assignment ──────────────────────────────────────────────────
-export function useAssignment(id) {
+export const useAssignment = (id) => {
   return useQuery({
-    queryKey: ['assignments', id],
+    queryKey: ['assignment', id],
     queryFn: async () => {
-      const { data } = await api.get(`/assignments/${id}`)
-      return data
+      const response = await api.get(`/assignments/${id}`);
+      return response.data;
     },
+    // Regula enabled împiedică React Query să facă request-ul dacă nu avem încă ID-ul în URL
     enabled: !!id,
-  })
-}
+  });
+};
 
 // ── Fetch leaderboard ────────────────────────────────────────────────────────
 export function useLeaderboard() {

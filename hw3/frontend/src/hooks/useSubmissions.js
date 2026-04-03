@@ -1,86 +1,106 @@
-/**
- * React Query hooks for the Submissions microservice.
- */
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import api from '../lib/axios'
-import toast from 'react-hot-toast'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import api from '../lib/axios';
+import toast from 'react-hot-toast';
 
-// ── Get all submissions for an assignment ────────────────────────────────────
+// 1. Obține submissiile pentru un assignment
 export function useSubmissions(assignmentId) {
   return useQuery({
     queryKey: ['submissions', assignmentId],
     queryFn: async () => {
-      const { data } = await api.get(`/submissions/assignment/${assignmentId}`)
-      return data
+      const { data } = await api.get(`/submissions/assignment/${assignmentId}`);
+      return data;
     },
     enabled: !!assignmentId,
-  })
+  });
 }
 
-// ── Upload submission (multipart) ────────────────────────────────────────────
+// 2. Obține TOATE submissiile (pentru pagina globală)
+export function useAllSubmissions() {
+  return useQuery({
+    queryKey: ['submissions', 'all'],
+    queryFn: async () => {
+      const { data } = await api.get(`/submissions/`);
+      return data;
+    }
+  });
+}
+
+// 3. Încarcă o submisie nouă (Folosind FormData pentru FastAPI)
 export function useUploadSubmission() {
-  const qc = useQueryClient()
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ assignmentId, file }) => {
-      const form = new FormData()
-      form.append('assignment_id', assignmentId)
-      form.append('file', file)
-      const { data } = await api.post('/submissions/', form, {
+      const formData = new FormData();
+      formData.append('assignment_id', assignmentId); // Trebuie sa coincida cu Form(...) din Python
+      formData.append('file', file);
+      
+      const { data } = await api.post('/submissions/', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
-      })
-      return data
+      });
+      return data;
     },
-    onSuccess: (_, vars) => {
-      qc.invalidateQueries({ queryKey: ['submissions', vars.assignmentId] })
-      toast.success('Submission uploaded!')
+    onSuccess: (_, { assignmentId }) => {
+      queryClient.invalidateQueries({ queryKey: ['submissions', assignmentId] });
+      toast.success('Solution submitted successfully!');
     },
     onError: (err) => {
-      toast.error(err.response?.data?.message || 'Upload failed')
-    },
-  })
+      toast.error(err.response?.data?.message || 'Failed to submit solution');
+    }
+  });
 }
 
-// ── Edit submission (multipart) ──────────────────────────────────────────────
+// 4. Editează (Înlocuiește) fișierul unei submisii
 export function useUpdateSubmission() {
-  const qc = useQueryClient()
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ subId, assignmentId, file }) => {
-      const form = new FormData()
-      form.append('file', file)
-      const { data } = await api.patch(`/submissions/${subId}`, form, {
+    mutationFn: async ({ subId, file }) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const { data } = await api.patch(`/submissions/${subId}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
-      })
-      return data
+      });
+      return data;
     },
-    onSuccess: (_, vars) => {
-      qc.invalidateQueries({ queryKey: ['submissions', vars.assignmentId] })
-      toast.success('Submission updated!')
+    onSuccess: (_, { assignmentId }) => {
+      queryClient.invalidateQueries({ queryKey: ['submissions', assignmentId] });
+      queryClient.invalidateQueries({ queryKey: ['submissions', 'all'] });
+      toast.success('Submission updated!');
     },
-    onError: (err) => {
-      toast.error(err.response?.data?.message || 'Update failed')
-    },
-  })
+  });
 }
 
-// ── Delete submission ────────────────────────────────────────────────────────
+// 5. Șterge o submisie
 export function useDeleteSubmission() {
-  const qc = useQueryClient()
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ subId, assignmentId }) => {
-      await api.delete(`/submissions/${subId}`)
-      return { assignmentId }
+    mutationFn: async ({ subId }) => {
+      await api.delete(`/submissions/${subId}`);
     },
-    onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: ['submissions', data.assignmentId] })
-      toast.success('Submission removed')
+    onSuccess: (_, { assignmentId }) => {
+      queryClient.invalidateQueries({ queryKey: ['submissions', assignmentId] });
+      queryClient.invalidateQueries({ queryKey: ['submissions', 'all'] });
+      toast.success('Submission deleted!');
     },
-    onError: (err) => {
-      toast.error(err.response?.data?.message || 'Delete failed')
-    },
-  })
+  });
 }
 
-// ── Download submission file URL ─────────────────────────────────────────────
-export function getFileDownloadUrl(subId) {
-  return `${import.meta.env.VITE_API_URL || '/api'}/submissions/${subId}/file`
-}
+// 6. Funcție pentru descărcarea securizată a fișierului (cu Token)
+export const downloadSubmissionFile = async (subId, filename) => {
+  try {
+    const response = await api.get(`/submissions/${subId}/file`, {
+      responseType: 'blob', // Important pentru fișiere
+    });
+    
+    // Creăm un URL local pentru fișier și forțăm descărcarea
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename || `submission_${subId}`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  } catch (error) {
+    toast.error('Error downloading file');
+  }
+};

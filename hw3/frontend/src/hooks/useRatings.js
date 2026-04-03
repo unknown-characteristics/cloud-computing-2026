@@ -21,12 +21,17 @@ export function useRatings(subId) {
 export function useCreateRating() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (payload) => {
-      const { data } = await api.post('/ratings/', payload)
+    // Schimbăm aici ca să destructurăm ce primește din componentă
+    mutationFn: async ({ submissionId, score }) => {
+      // Trimitem către backend exact numele cerut de Pydantic: "submission_id"
+      const { data } = await api.post('/ratings/', {
+        submission_id: submissionId,
+        score: score
+      })
       return data
     },
     onSuccess: (_, vars) => {
-      qc.invalidateQueries({ queryKey: ['ratings', vars.submission_id] })
+      qc.invalidateQueries({ queryKey: ['ratings', vars.submissionId] })
       toast.success('Rating submitted!')
     },
     onError: (err) => {
