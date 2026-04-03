@@ -23,7 +23,7 @@ async def login(user: UserLogin, response: Response, db: Session = Depends(get_d
         max_age=3600
     )
     
-    return {"message": "Login successful"}
+    return {"message": "Login successful", "access_token": token}
 
 @router.delete("/{user_id}")
 async def remove_user(user_id: int, response: Response, db: Session = Depends(get_db)):

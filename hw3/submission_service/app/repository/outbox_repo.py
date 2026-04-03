@@ -16,6 +16,7 @@ class OutboxRepository:
 
     def create(self, event: OutboxEvent) -> OutboxEvent:
         key = self._key()
+        key = self._client.allocate_ids(key, 1)[0]
         entity = datastore.Entity(key=key)
 
         data = event.model_dump(exclude={"id"})

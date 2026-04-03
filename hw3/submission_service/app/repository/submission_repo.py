@@ -11,6 +11,7 @@ class SubmissionRepository:
     def create(self, sub: Submission) -> Submission:
         sub.created_at = sub.updated_at = utcnow()
         key = self._client.key(self._kind)
+        key = self._client.allocate_ids(key, 1)[0]
         entity = datastore.Entity(key=key)
         entity.update(sub.model_dump(exclude={"id"}))
         self._client.put(entity)
