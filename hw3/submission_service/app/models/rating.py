@@ -3,10 +3,10 @@ from typing import Optional
 from pydantic import BaseModel
 
 class Rating(BaseModel):
-    id: Optional[int | str] = None
+    id: Optional[int] = None
     user_id: int
-    submission_id: str
-    assignment_id: str
+    submission_id: int
+    assignment_id: int
     score: int
     comment: Optional[str] = None
     status: str = "active"  # Pentru soft-delete la rating

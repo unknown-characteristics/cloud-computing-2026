@@ -7,6 +7,7 @@ class CreateAssignmentDTO(BaseModel):
     creator_id: int | None = None
     description: str
     name: str
+    status: str
     start_time: datetime
     stop_grade_time: datetime
     stop_submit_time: datetime
@@ -48,6 +49,7 @@ class AssignmentResponseDTO(BaseModel):
     creator_id: int
     description: str
     name: str
+    status: str
     start_time: datetime
     stop_grade_time: datetime
     stop_submit_time: datetime

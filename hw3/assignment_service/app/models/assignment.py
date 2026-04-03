@@ -12,6 +12,7 @@ class Assignment(BaseModel):
     creator_id: int
     description: str
     name: str
+    status: str
     start_time: datetime
     stop_grade_time: datetime
     stop_submit_time: datetime
@@ -21,3 +22,6 @@ class Assignment(BaseModel):
 
     class Config:
         json_encoders = {datetime: lambda v: v.isoformat()}
+
+class CheckDeadlinePayload(BaseModel):
+    deadline_type: str  # "stop_submit" or "stop_grade"
