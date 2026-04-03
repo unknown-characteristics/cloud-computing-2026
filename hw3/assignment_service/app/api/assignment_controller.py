@@ -23,7 +23,7 @@ async def create_assignment(dto: CreateAssignmentDTO, user_token: dict | None = 
     if not user_token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You must be logged in to perform this action")
     
-    dto.creator_id = int(user_token["sub"])
+    dto.creator_id = int(user_token["sub"]["id"])
     
     return await _service.create_assignment(dto)
 
