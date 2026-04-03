@@ -91,12 +91,18 @@ export const downloadSubmissionFile = async (subId, filename) => {
     const response = await api.get(`/submissions/${subId}/file`, {
       responseType: 'blob', // Important pentru fișiere
     });
-    
+    const disposition = response.headers['content-disposition'];
+    let filename = `submission_${subId}`;
+    if (disposition && disposition.includes('filename=')) {
+      filename = disposition
+        .split('filename=')[1]
+        .replace(/"/g, ''); // remove quotes
+    }
     // Creăm un URL local pentru fișier și forțăm descărcarea
     const url = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', filename || `submission_${subId}`);
+    link.setAttribute('download', filename);
     document.body.appendChild(link);
     link.click();
     link.remove();

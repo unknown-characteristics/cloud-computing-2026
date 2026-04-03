@@ -87,7 +87,7 @@ function Hero({ onCreateClick, isLoggedIn }) {
 
         {/* Sub-heading */}
         <p className="text-slate-400 text-lg leading-relaxed mb-8 max-w-xl mx-auto">
-          Site pentru participat la competiții, etc. o sa adaug eu după o descriere
+          Site pentru participat la competiții, etc.
         </p>
 
         {/* Stats row */}

@@ -19,7 +19,8 @@ class RatingRepository:
         key = self._build_key(rating.submission_id, str(rating.user_id))
 
         # Prevent overwrite
-        if self._client.get(key):
+        old = self._client.get(key)
+        if old is not None and old["status"] != "deleted":
             raise ValueError(
                 f"Rating already exists for submission_id={rating.submission_id} "
                 f"and user_id={rating.user_id}"
