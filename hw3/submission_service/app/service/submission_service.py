@@ -31,7 +31,7 @@ class SubmissionService:
             filepath=filename
         ))
         self._log_event(sub.id, sub.assignment_id, "submission.created")
-        OutboxService().process_pending_events()
+        await OutboxService().process_pending_events()
         return SubmissionResponseDTO(**sub.model_dump())
 
     def get_all_by_assignment(self, assignment_id: int) -> list[SubmissionResponseDTO]:
@@ -71,10 +71,10 @@ class SubmissionService:
 
         updated = self._repo.update(sub_id, {"filepath": filename})
         self._log_event(sub_id, updated.assignment_id, "submission.updated", {"filepath": filename})
-        OutboxService().process_pending_events()
+        await OutboxService().process_pending_events()
         return SubmissionResponseDTO(**updated.model_dump())
 
-    def delete(self, sub_id: int, user_id: int) -> None:
+    async def delete(self, sub_id: int, user_id: int) -> None:
         sub = self._repo.get_by_id(sub_id)
         if not sub:
             raise HTTPException(status_code=404, detail="Submission not found")
@@ -83,7 +83,7 @@ class SubmissionService:
 
         self._repo.update(sub_id, {"status": "deleted", "deleted_at": utcnow()})
         self._log_event(sub_id, sub.assignment_id, "submission.deleted")
-        OutboxService().process_pending_events()
+        await OutboxService().process_pending_events()
 
     def _log_event(self, sub_id: int, assign_id: str, ev_type: str, extra: dict = None):
         data = {"submission_id": sub_id, "assignment_id": assign_id}

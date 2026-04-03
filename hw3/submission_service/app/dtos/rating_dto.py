@@ -3,7 +3,7 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 class CreateRatingDTO(BaseModel):
-    submission_id: str
+    submission_id: int
     assignment_id: int
     score: int = Field(..., ge=1, le=5)
     comment: Optional[str] = None
@@ -13,9 +13,9 @@ class UpdateRatingDTO(BaseModel):
     comment: Optional[str] = None
 
 class RatingResponseDTO(BaseModel):
-    id: str
+    id: int
     user_id: int
-    submission_id: str
+    submission_id: int
     assignment_id: int
     score: int
     comment: Optional[str]
