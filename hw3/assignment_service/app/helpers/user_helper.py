@@ -2,7 +2,6 @@ from fastapi import Request
 import base64, json
 
 def extract_user_token(request: Request):
-    print(request.headers)
     user_data = request.headers.get("X-User-Token")
     if user_data is None:
         return None

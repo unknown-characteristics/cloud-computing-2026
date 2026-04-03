@@ -18,21 +18,21 @@ class SubmissionRepository:
         sub.id = str(entity.key.id)
         return sub
 
-    def get_by_id(self, sub_id: str) -> Optional[Submission]:
+    def get_by_id(self, sub_id: int) -> Optional[Submission]:
         key = self._client.key(self._kind, int(sub_id))
         entity = self._client.get(key)
         if not entity or entity.get("status") == "deleted":
             return None
         return Submission(id=str(entity.key.id), **entity)
 
-    def get_all_active_by_assignment(self, assignment_id: str) -> list[Submission]:
+    def get_all_active_by_assignment(self, assignment_id: int) -> list[Submission]:
         query = self._client.query(kind=self._kind)
         query.add_filter("assignment_id", "=", assignment_id)
         query.add_filter("status", "=", "active")
         entities = list(query.fetch())
         return [Submission(id=str(e.key.id), **e) for e in entities]
 
-    def update(self, sub_id: str, fields: dict) -> Submission:
+    def update(self, sub_id: int, fields: dict) -> Submission:
         fields["updated_at"] = utcnow()
         key = self._client.key(self._kind, int(sub_id))
         entity = self._client.get(key)

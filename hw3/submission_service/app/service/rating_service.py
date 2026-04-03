@@ -15,7 +15,7 @@ class RatingService:
         self._sub_repo = SubmissionRepository()
         self._outbox = OutboxRepository()
 
-    def create(self, dto: CreateRatingDTO, user_id: int) -> RatingResponseDTO:
+    async def create(self, dto: CreateRatingDTO, user_id: int) -> RatingResponseDTO:
         if not self._sub_repo.get_by_id(dto.submission_id):
             raise HTTPException(status_code=404, detail="Submission not found")
 
@@ -24,14 +24,14 @@ class RatingService:
 
         rating = self._repo.create(Rating(**rating_data))
         self._log_event(rating.id, rating.submission_id, "rating.created")
-        OutboxService().process_pending_events()
+        await OutboxService().process_pending_events()
         return RatingResponseDTO(**rating.model_dump())
 
-    def get_by_submission(self, sub_id: str) -> list[RatingResponseDTO]:
+    def get_by_submission(self, sub_id: int) -> list[RatingResponseDTO]:
         ratings = self._repo.get_active_by_submission(sub_id)
         return [RatingResponseDTO(**r.model_dump()) for r in ratings]
 
-    def update(self, rating_id: str, dto: UpdateRatingDTO, user_id: int) -> RatingResponseDTO:
+    async def update(self, rating_id: str, dto: UpdateRatingDTO, user_id: int) -> RatingResponseDTO:
         rating = self._repo.get_by_id(rating_id)
         if not rating:
             raise HTTPException(status_code=404, detail="Rating not found")
@@ -41,10 +41,10 @@ class RatingService:
         fields = dto.model_dump(exclude_none=True)
         updated = self._repo.update(rating_id, fields)
         self._log_event(rating_id, updated.submission_id, "rating.updated", fields)
-        OutboxService().process_pending_events()
+        await OutboxService().process_pending_events()
         return RatingResponseDTO(**updated.model_dump())
 
-    def delete(self, rating_id: str, user_id: int) -> None:
+    async def delete(self, rating_id: str, user_id: int) -> None:
         rating = self._repo.get_by_id(rating_id)
         if not rating:
             raise HTTPException(status_code=404, detail="Rating not found")
@@ -53,9 +53,9 @@ class RatingService:
 
         self._repo.update(rating_id, {"status": "deleted", "deleted_at": utcnow()})
         self._log_event(rating_id, rating.submission_id, "rating.deleted")
-        OutboxService().process_pending_events()
+        await OutboxService().process_pending_events()
 
-    def _log_event(self, rating_id: str, sub_id: str, ev_type: str, extra: dict = None):
+    def _log_event(self, rating_id: str, sub_id: int, ev_type: str, extra: dict = None):
         data = {"rating_id": rating_id, "submission_id": sub_id}
         if extra: data.update(extra)
         self._outbox.create(OutboxEvent(
