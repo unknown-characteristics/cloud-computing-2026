@@ -1,20 +1,61 @@
-from app.core.firestore_client import get_firestore_client
+from google.cloud import datastore
+
+from app.core.datastore_client import get_datastore_client
 from app.models.outbox import OutboxEvent
+
+KIND = "outbox"
 
 class OutboxRepository:
     def __init__(self):
-        self._db = get_firestore_client()
-        self._collection = self._db.collection("outbox")
+        self._db: datastore.Client = get_datastore_client()
 
-    async def create(self, event: OutboxEvent) -> OutboxEvent:
-        doc_ref = self._collection.document()
-        await doc_ref.set(event.model_dump(exclude={"id"}))
-        event.id = doc_ref.id
+    def _key(self, event_id: str | None = None):
+        if event_id:
+            return self._db.key(KIND, event_id)
+        return self._db.key(KIND)
+
+    def create(self, event: OutboxEvent) -> OutboxEvent:
+        key = self._key()
+        entity = datastore.Entity(key=key)
+
+        data = event.model_dump(exclude={"id"})
+        entity.update(data)
+
+        self._db.put(entity)
+
+        event.id = entity.key.id or entity.key.name
         return event
 
-    async def get_pending(self) -> list[OutboxEvent]:
-        docs = self._collection.where("pending", "==", True).stream()
-        return [OutboxEvent(id=doc.id, **doc.to_dict()) async for doc in docs]
+    def get_pending(self) -> list[OutboxEvent]:
+        query = self._db.query(kind=KIND)
+        query.add_filter("pending", "=", True)
 
-    async def mark_as_published(self, event_id: str) -> None:
-        await self._collection.document(event_id).update({"pending": False})
+        results = query.fetch()
+
+        events = []
+        for entity in results:
+            events.append(
+                OutboxEvent(id=entity.key.id or entity.key.name, **dict(entity))
+            )
+        return events
+
+    def mark_as_published(self, event_id: str) -> None:
+        key = self._key(event_id)
+        entity = self._db.get(key)
+
+        if not entity:
+            return
+
+        entity["pending"] = False
+        self._db.put(entity)
+
+    def get_all(self) -> list[OutboxEvent]:
+        query = self._db.query(kind=KIND)
+        results = query.fetch()
+
+        events = []
+        for entity in results:
+            events.append(
+                OutboxEvent(id=entity.key.id or entity.key.name, **dict(entity))
+            )
+        return events

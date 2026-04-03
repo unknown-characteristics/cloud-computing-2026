@@ -3,9 +3,9 @@ from typing import Optional
 from pydantic import BaseModel
 
 class Submission(BaseModel):
-    id: Optional[str] = None
+    id: Optional[int | str] = None
     user_id: int
-    assignment_id: str
+    assignment_id: int
     filepath: str
     status: str = "active" # poate fi 'active' sau 'deleted' (soft delete)
     created_at: Optional[datetime] = None

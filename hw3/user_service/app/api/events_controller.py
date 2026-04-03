@@ -8,4 +8,4 @@ router = APIRouter(prefix="/events", tags=["Events"])
     summary="Receive events from Pub/Sub",
 )
 async def receive_event(request: Request):
-    print(request.json)
+    print(await request.json())
