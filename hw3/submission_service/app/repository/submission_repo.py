@@ -32,6 +32,13 @@ class SubmissionRepository:
         entities = list(query.fetch())
         return [Submission(id=str(e.key.id), **e) for e in entities]
 
+    def get_all_active_by_user(self, user_id: int) -> list[Submission]:
+        query = self._client.query(kind=self._kind)
+        query.add_filter("user_id", "=", user_id)
+        query.add_filter("status", "=", "active")
+        entities = list(query.fetch())
+        return [Submission(id=str(e.key.id), **e) for e in entities]
+
     def update(self, sub_id: int, fields: dict) -> Submission:
         fields["updated_at"] = utcnow()
         key = self._client.key(self._kind, int(sub_id))

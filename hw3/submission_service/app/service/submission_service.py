@@ -38,6 +38,10 @@ class SubmissionService:
         subs = self._repo.get_all_active_by_assignment(assignment_id)
         return [SubmissionResponseDTO(**s.model_dump()) for s in subs]
 
+    def get_all_by_user(self, user_id: int) -> list[SubmissionResponseDTO]:
+        subs = self._repo.get_all_active_by_user(user_id)
+        return [SubmissionResponseDTO(**s.model_dump()) for s in subs]
+
     def get_file(self, sub_id: int) -> tuple[bytes, str, str]:
         sub = self._repo.get_by_id(sub_id)
         if not sub:
@@ -78,7 +82,7 @@ class SubmissionService:
         sub = self._repo.get_by_id(sub_id)
         if not sub:
             raise HTTPException(status_code=404, detail="Submission not found")
-        if sub.user_id != user_id:
+        if sub.user_id != user_id and user_id != -1:
             raise HTTPException(status_code=403, detail="Not authorized to delete this submission")
 
         self._repo.update(sub_id, {"status": "deleted", "deleted_at": utcnow()})
