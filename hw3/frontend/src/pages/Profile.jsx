@@ -98,7 +98,7 @@ export default function Profile() {
           <StatCard
             icon={Zap}
             label="Assignments Created"
-            value={isLoading ? '…' : myAssignments.length}
+            value={isLoading ? '…' : user.created_assignments_count}
             color="cyan"
           />
           <StatCard

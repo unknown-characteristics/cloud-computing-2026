@@ -73,7 +73,7 @@ def authenticate_user(user_in: UserLogin, db: Session) -> str:
     if not user or not security.verify_password(user_in.password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Incorrect email or password")
 
-    token_data = {"sub": json.dumps({"id": str(user.id), "name": str(user.name), "email": str(user.email), "created_assignments_count": str(user.created_assignments_count), "credibility_score": str(user.credibility_score)})}
+    token_data = {"sub": json.dumps({"id": user.id, "name": str(user.name), "email": str(user.email), "created_assignments_count": str(user.created_assignments_count), "credibility_score": str(user.credibility_score)})}
     token = security.create_access_token(token_data)
     
     return token
