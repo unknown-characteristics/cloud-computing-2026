@@ -25,7 +25,7 @@ async def create_assignment(dto: CreateAssignmentDTO, user_token: dict | None = 
     
     dto.creator_id = int(user_token["sub"])
     
-    return _service.create_assignment(dto)
+    return await _service.create_assignment(dto)
 
 
 @router.delete(
@@ -33,9 +33,16 @@ async def create_assignment(dto: CreateAssignmentDTO, user_token: dict | None = 
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete an assignment by ID",
 )
-async def delete_assignment(assignment_id: str) -> None:
-    _service.delete_assignment(assignment_id)
+async def delete_assignment(assignment_id: int) -> None:
+    await _service.delete_assignment(assignment_id)
 
+@router.get(
+    "/{assignment_id}",
+    status_code=status.HTTP_200_OK,
+    summary="Get an assignment by ID",
+)
+async def get_assignment_by_id(assignment_id: int) -> None:
+    return _service.get_assignment_by_id(assignment_id)
 
 @router.get(
     "/",
@@ -53,8 +60,8 @@ async def get_assignments() -> list[AssignmentResponseDTO]:
     status_code=status.HTTP_200_OK,
     summary="Edit an existing assignment",
 )
-async def edit_assignment(assignment_id: str, dto: EditAssignmentDTO) -> AssignmentResponseDTO:
-    return _service.edit_assignment(assignment_id, dto)
+async def edit_assignment(assignment_id: int, dto: EditAssignmentDTO) -> AssignmentResponseDTO:
+    return await _service.edit_assignment(assignment_id, dto)
 
 
 @router.get(

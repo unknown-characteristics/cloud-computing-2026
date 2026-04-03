@@ -16,7 +16,7 @@ async def create(
 
 @router.get("/assignment/{assignment_id}", response_model=list[SubmissionResponseDTO])
 async def get_by_assignment(assignment_id: str, user_id: int = Depends(get_current_user_id)):
-    return await _service.get_all_by_assignment(assignment_id)
+    return _service.get_all_by_assignment(assignment_id)
 
 @router.get("/{sub_id}/file", summary="Download submission file")
 async def get_file(sub_id: str, user_id: int = Depends(get_current_user_id)):
@@ -34,4 +34,4 @@ async def update(
 
 @router.delete("/{sub_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete(sub_id: str, user_id: int = Depends(get_current_user_id)):
-    await _service.delete(sub_id, user_id)
+    _service.delete(sub_id, user_id)

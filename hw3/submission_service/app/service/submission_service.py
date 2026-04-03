@@ -8,7 +8,7 @@ from app.repository.outbox_repo import OutboxRepository
 from app.helpers.datetime_helpers import utcnow
 from app.core.storage_client import get_storage_client
 from app.core.config import settings
-
+from app.service.outbox_service import OutboxService
 
 class SubmissionService:
     def __init__(self):
@@ -25,20 +25,21 @@ class SubmissionService:
         content = await file.read()
         blob.upload_from_string(content, content_type=file.content_type)
 
-        sub = await self._repo.create(Submission(
+        sub = self._repo.create(Submission(
             user_id=user_id,
             assignment_id=assignment_id,
             filepath=filename
         ))
-        await self._log_event(sub.id, sub.assignment_id, "submission.created")
+        self._log_event(sub.id, sub.assignment_id, "submission.created")
+        OutboxService().process_pending_events()
         return SubmissionResponseDTO(**sub.model_dump())
 
-    async def get_all_by_assignment(self, assignment_id: str) -> list[SubmissionResponseDTO]:
-        subs = await self._repo.get_all_active_by_assignment(assignment_id)
+    def get_all_by_assignment(self, assignment_id: str) -> list[SubmissionResponseDTO]:
+        subs = self._repo.get_all_active_by_assignment(assignment_id)
         return [SubmissionResponseDTO(**s.model_dump()) for s in subs]
 
-    async def get_file(self, sub_id: str) -> tuple[bytes, str, str]:
-        sub = await self._repo.get_by_id(sub_id)
+    def get_file(self, sub_id: str) -> tuple[bytes, str, str]:
+        sub = self._repo.get_by_id(sub_id)
         if not sub:
             raise HTTPException(status_code=404, detail="Submission not found")
 
@@ -53,7 +54,7 @@ class SubmissionService:
         return file_bytes, blob.content_type or "application/octet-stream", original_name
 
     async def update(self, sub_id: str, file: UploadFile, user_id: int) -> SubmissionResponseDTO:
-        sub = await self._repo.get_by_id(sub_id)
+        sub = self._repo.get_by_id(sub_id)
         if not sub:
             raise HTTPException(status_code=404, detail="Submission not found")
         if sub.user_id != user_id:
@@ -68,23 +69,25 @@ class SubmissionService:
         content = await file.read()
         blob.upload_from_string(content, content_type=file.content_type)
 
-        updated = await self._repo.update(sub_id, {"filepath": filename})
-        await self._log_event(sub_id, updated.assignment_id, "submission.updated", {"filepath": filename})
+        updated = self._repo.update(sub_id, {"filepath": filename})
+        self._log_event(sub_id, updated.assignment_id, "submission.updated", {"filepath": filename})
+        OutboxService().process_pending_events()
         return SubmissionResponseDTO(**updated.model_dump())
 
-    async def delete(self, sub_id: str, user_id: int) -> None:
-        sub = await self._repo.get_by_id(sub_id)
+    def delete(self, sub_id: str, user_id: int) -> None:
+        sub = self._repo.get_by_id(sub_id)
         if not sub:
             raise HTTPException(status_code=404, detail="Submission not found")
         if sub.user_id != user_id:
             raise HTTPException(status_code=403, detail="Not authorized to delete this submission")
 
-        await self._repo.update(sub_id, {"status": "deleted", "deleted_at": utcnow()})
-        await self._log_event(sub_id, sub.assignment_id, "submission.deleted")
+        self._repo.update(sub_id, {"status": "deleted", "deleted_at": utcnow()})
+        self._log_event(sub_id, sub.assignment_id, "submission.deleted")
+        OutboxService().process_pending_events()
 
-    async def _log_event(self, sub_id: str, assign_id: str, ev_type: str, extra: dict = None):
+    def _log_event(self, sub_id: str, assign_id: str, ev_type: str, extra: dict = None):
         data = {"submission_id": sub_id, "assignment_id": assign_id}
         if extra: data.update(extra)
-        await self._outbox.create(OutboxEvent(
+        self._outbox.create(OutboxEvent(
             data=json.dumps(data), event_id=str(uuid.uuid4()), event_type=ev_type, pending=True
         ))
