@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+sqlalchemy
+pymysql
+cryptography
+pyjwt
+passlib[bcrypt]
+pydantic[email]
+google-cloud-secret-manager
+python-dotenv
+authlib
+uvicorn
+pydantic-settings
+google-cloud-pubsub

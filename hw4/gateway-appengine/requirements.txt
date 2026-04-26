@@ -1,0 +1,7 @@
+fastapi
+httpx
+google-auth
+python-jose[cryptography]
+google-cloud-secret-manager
+uvicorn
+google-cloud-run

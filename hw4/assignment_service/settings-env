@@ -1,0 +1,3 @@
+SERVICE_NAME=assignments-service
+PROJECT_ID=cloudcomputing-491711
+PUBSUB_TOPIC=assignments-events

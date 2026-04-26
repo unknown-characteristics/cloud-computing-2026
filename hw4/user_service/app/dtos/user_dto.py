@@ -1,0 +1,17 @@
+from pydantic import BaseModel, EmailStr
+
+class UserRegister(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class UserResponse(BaseModel):
+    id: int
+    name: str
+    email: EmailStr
+    credibility_score: int
+    created_assignments_count: int
