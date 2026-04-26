@@ -4,7 +4,7 @@ import { useAuthStore } from '../store/authStore';
 // 1. Creăm instanța de bază
 const api = axios.create({
   // Folosim variabila din .env sau link-ul direct ca fallback
-  baseURL: import.meta.env.VITE_API_URL || 'https://gateway-dot-cloudcomputing-491711.wn.r.appspot.com/api',
+  baseURL: import.meta.env.VITE_API_URL || 'https://comparena-eyghbafqecafdke3.polandcentral-01.azurewebsites.net/api',
   headers: {
     'Content-Type': 'application/json',
   },
