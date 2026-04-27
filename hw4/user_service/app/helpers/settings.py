@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     key_vault_url: str                         # https://<vault>.vault.azure.net
     service_bus_namespace: str                 # <namespace>.servicebus.windows.net  (FQDN, no scheme)
     service_bus_topic: str                     # e.g. users-events
-    service_bus_subscription: str = "users-service"
+    service_bus_subscription: str = "users-sub"
 
     # ---- Database ----
     db_creds_secret: str = "USERS-DB-CREDS"    # Key Vault secret name holding the dotenv-style creds blob

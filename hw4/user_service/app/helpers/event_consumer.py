@@ -60,7 +60,7 @@ async def _dispatch(envelope: dict) -> None:
     await handler(envelope)
 
 
-async def run_consumer(stop_event: asyncio.Event) -> None:
+async def run_consumer(topic_name: str, stop_event: asyncio.Event) -> None:
     """Long-running coroutine. Cancelled via `stop_event.set()`."""
     cred = DefaultAzureCredential()
     backoff = 1.0
@@ -71,7 +71,7 @@ async def run_consumer(stop_event: asyncio.Event) -> None:
                 credential=cred,
             ) as client:
                 receiver = client.get_subscription_receiver(
-                    topic_name=settings.service_bus_topic,
+                    topic_name=topic_name,
                     subscription_name=settings.service_bus_subscription,
                     max_wait_time=5,
                 )

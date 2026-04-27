@@ -22,7 +22,8 @@ async def lifespan(app: FastAPI):
 
     log.info("Starting Service Bus consumer")
     stop_event = asyncio.Event()
-    consumer_task = asyncio.create_task(run_consumer(stop_event))
+    consumer_task = asyncio.create_task(run_consumer("submissions-events", stop_event))
+    consumer_task = asyncio.create_task(run_consumer("assignments-events", stop_event))
 
     try:
         yield
