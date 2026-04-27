@@ -1,10 +1,15 @@
-from google.cloud import storage
+from azure.identity import DefaultAzureCredential
+from azure.storage.blob import BlobServiceClient
 from app.core.config import settings
 
-_storage_client: storage.Client | None = None
+_blob_service_client: BlobServiceClient | None = None
 
-def get_storage_client() -> storage.Client:
-    global _storage_client
-    if _storage_client is None:
-        _storage_client = storage.Client(project=settings.PROJECT_ID)
-    return _storage_client
+def get_blob_service_client() -> BlobServiceClient:
+    global _blob_service_client
+    if _blob_service_client is None:
+        credential = DefaultAzureCredential()
+        _blob_service_client = BlobServiceClient(
+            account_url=f"https://{settings.AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net",
+            credential=credential,
+        )
+    return _blob_service_client
