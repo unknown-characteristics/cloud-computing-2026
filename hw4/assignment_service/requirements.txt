@@ -10,3 +10,4 @@ azure-cosmos==4.7.0
 httpx  # Added for calling local endpoints from the consumer
 gunicorn
 uvicorn
+aiohttp

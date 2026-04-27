@@ -7,7 +7,7 @@ class Assignment(BaseModel):
     """
     Mirrors the Datastore 'assignments' kind schema.
     """
-    id: Optional[int] = None                        # Datastore document ID (auto-generated)
+    id: Optional[str] = None                        # Datastore document ID (auto-generated)
     created_at: Optional[datetime] = None
     creator_id: int
     description: str

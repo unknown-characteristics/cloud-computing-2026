@@ -1,5 +1,4 @@
-from .assignment_repository import AssignmentRepository
-from .outbox_repository import OutboxRepository
+from .store_repository import StoreRepository
 from .other_event_repository import OtherEventRepository
 
-__all__ = ["AssignmentRepository", "OutboxRepository", "OtherEventRepository"]
+__all__ = ["StoreRepository", "OtherEventRepository"]

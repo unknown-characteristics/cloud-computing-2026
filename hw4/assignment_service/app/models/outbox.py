@@ -7,8 +7,9 @@ class OutboxEvent(BaseModel):
     Mirrors the Datastore 'outbox' kind schema.
     Used for the reliable outbox pattern with Pub/Sub.
     """
-    id: Optional[int | str] = None   # Datastore document ID
+    id: Optional[str] = None   # Datastore document ID
     data: str
     event_id: str
+    partition_id: str
     event_type: str
     pending: bool = True

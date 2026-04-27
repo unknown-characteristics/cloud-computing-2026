@@ -15,6 +15,7 @@ class OtherEventRepository:
 
         event = OtherEvent(event_id=event_id)
         self.session.add(event)
-        self.session.commit()
-        self.session.refresh(event)
+        self.session.flush()
+        # self.session.commit()
+        # self.session.refresh(event)
         return event

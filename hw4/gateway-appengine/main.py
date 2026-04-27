@@ -40,7 +40,7 @@ USERS_PUBLIC_KEY_SECRET = os.environ.get(
     "USERS_PUBLIC_KEY_SECRET", "USERS-JWT-KEY-PUBLIC"
 )
 JWT_AUDIENCE = os.environ.get("JWT_AUDIENCE", "comparena-users")
-JWT_ISSUER = os.environ.get("JWT_ISSUER")  # optional; if set, enforced
+JWT_ISSUER = os.environ.get("JWT_ISSUER", "users-service")  # optional; if set, enforced
 
 # One pair (URL, audience) per downstream service.
 # - URL is the App Service base URL, e.g. https://users-service.azurewebsites.net

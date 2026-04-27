@@ -53,7 +53,12 @@ HANDLERS: dict[str, EventHandler] = {
 
 
 async def _dispatch(envelope: dict) -> None:
-    handler = HANDLERS.get(envelope["event_type"])
+    try:
+        handler = HANDLERS.get(envelope["event_type"])
+    except KeyError:
+        handler = None
+        envelope["event_type"] = "unknown"
+
     if handler is None:
         log.info("No handler for event_type=%s; acking anyway", envelope["event_type"])
         return

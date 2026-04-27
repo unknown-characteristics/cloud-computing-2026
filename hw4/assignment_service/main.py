@@ -12,7 +12,8 @@ async def lifespan(app: FastAPI):
     stop_event = asyncio.Event()
     # Listen to its own events + global users topic
     tasks = [
-        asyncio.create_task(run_consumer(settings.service_bus_topic, stop_event)),
+        asyncio.create_task(run_consumer("submissions-events", stop_event)),
+        asyncio.create_task(run_consumer("assignments-events", stop_event)),
         asyncio.create_task(run_consumer("users-events", stop_event))
     ]
     try:
