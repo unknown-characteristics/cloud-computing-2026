@@ -1,7 +1,6 @@
 from typing import Optional
 from pydantic import BaseModel
 
-
 class OutboxEvent(BaseModel):
     """
     Mirrors the Datastore 'outbox' kind schema.
@@ -10,5 +9,6 @@ class OutboxEvent(BaseModel):
     id: Optional[int | str] = None   # Datastore document ID
     data: str
     event_id: str
+    partition_id: str
     event_type: str
     pending: bool = True

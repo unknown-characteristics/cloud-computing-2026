@@ -9,8 +9,10 @@ class Settings(BaseSettings):
 
     # ---- Cosmos DB (replacement for GCP Datastore) ----
     cosmos_endpoint: str                       # https://<account>.documents.azure.com:443/
-    cosmos_database: str = "comparena"         # ≈ old Datastore database "cloud-hw1"
+    cosmos_database: str = "comparena-cosmos"         # ≈ old Datastore database "cloud-hw1"
 
+    azure_storage_account_name: str = "comparena"
+    
     model_config = SettingsConfigDict(
         env_file="settings.env",
         env_file_encoding="utf-8",

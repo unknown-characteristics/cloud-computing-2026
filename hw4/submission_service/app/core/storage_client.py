@@ -9,7 +9,7 @@ def get_blob_service_client() -> BlobServiceClient:
     if _blob_service_client is None:
         credential = DefaultAzureCredential()
         _blob_service_client = BlobServiceClient(
-            account_url=f"https://{settings.AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net",
+            account_url=f"https://{settings.azure_storage_account_name}.blob.core.windows.net",
             credential=credential,
         )
     return _blob_service_client
