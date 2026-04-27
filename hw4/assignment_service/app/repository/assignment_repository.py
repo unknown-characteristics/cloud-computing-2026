@@ -1,116 +1,74 @@
+import uuid
 from datetime import datetime, timezone
 from typing import Optional
+from azure.cosmos.exceptions import CosmosResourceNotFoundError
 
-from google.cloud import datastore
-
-from app.core.datastore_client import get_datastore_client
+from app.core.datastore_client import get_container
 from app.models.assignment import Assignment
 
-KIND = "assignment"
+KIND = "assignments"
 
 class AssignmentRepository:
     def __init__(self):
-        self._db: datastore.Client = get_datastore_client()
-
-    def _key(self, assignment_id: Optional[str] = None):
-        if assignment_id:
-            return self._db.key(KIND, assignment_id)
-        return self._db.key(KIND)
+        self._container = get_container(KIND)
 
     def create(self, assignment: Assignment) -> Assignment:
         now = datetime.now(timezone.utc)
         assignment.created_at = now
         assignment.updated_at = now
 
-        key = self._key()
-        key = self._db.allocate_ids(key, 1)[0]
-        entity = datastore.Entity(key=key)
+        # Cosmos DB strictly requires a string ID
+        assignment.id = str(uuid.uuid4())
 
-        data = assignment.model_dump(exclude={"id"})
-        entity.update(data)
+        data = assignment.model_dump()
+        # Cosmos DB requires datetime fields to be formatted as ISO strings in JSON
+        for k, v in data.items():
+            if isinstance(v, datetime):
+                data[k] = v.isoformat()
 
-        self._db.put(entity)
-
-        assignment.id = entity.key.id or entity.key.name
+        self._container.upsert_item(data)
         return assignment
 
-    def get_by_id(self, assignment_id: int) -> Optional[Assignment]:
-        key = self._key(assignment_id)
-        entity = self._db.get(key)
-        if not entity:
+    def get_by_id(self, assignment_id: int | str) -> Optional[Assignment]:
+        try:
+            item = self._container.read_item(item=str(assignment_id), partition_key=str(assignment_id))
+            return Assignment(**item)
+        except CosmosResourceNotFoundError:
             return None
-
-        return Assignment(id=entity.key.id or entity.key.name, **dict(entity))
 
     def get_all(self) -> list[Assignment]:
-        query = self._db.query(kind=KIND)
-        results = query.fetch()
-
-        assignments = []
-        for entity in results:
-            assignments.append(
-                Assignment(id=entity.key.id or entity.key.name, **dict(entity))
-            )
-        return assignments
+        items = list(self._container.query_items(
+            query="SELECT * FROM c",
+            enable_cross_partition_query=True
+        ))
+        return [Assignment(**item) for item in items]
     
-    def get_all_by_creator_id(self, creator_id: int) -> list[Assignment]:
-        query = self._db.query(kind=KIND)
-        query.add_filter("creator_id", "=", creator_id)
-        results = query.fetch()
+    def get_all_by_creator_id(self, creator_id: int | str) -> list[Assignment]:
+        items = list(self._container.query_items(
+            query="SELECT * FROM c WHERE c.creator_id = @creator_id",
+            parameters=[{"name": "@creator_id", "value": int(creator_id)}],
+            enable_cross_partition_query=True
+        ))
+        return [Assignment(**item) for item in items]
 
-        assignments = []
-        for entity in results:
-            assignments.append(
-                Assignment(id=entity.key.id or entity.key.name, **dict(entity))
-            )
-        return assignments
-
-    def update(self, assignment_id: int, fields: dict) -> Optional[Assignment]:
-        key = self._key(assignment_id)
-        entity = self._db.get(key)
-        if not entity:
+    def update(self, assignment_id: int | str, fields: dict) -> Optional[Assignment]:
+        try:
+            item = self._container.read_item(item=str(assignment_id), partition_key=str(assignment_id))
+            fields["updated_at"] = datetime.now(timezone.utc).isoformat()
+            
+            for k, v in fields.items():
+                if isinstance(v, datetime):
+                    fields[k] = v.isoformat()
+            
+            item.update(fields)
+            self._container.upsert_item(item)
+            return Assignment(**item)
+        except CosmosResourceNotFoundError:
             return None
 
-        fields["updated_at"] = datetime.now(timezone.utc)
-        entity.update(fields)
-
-        self._db.put(entity)
-
-        return Assignment(id=entity.key.id or entity.key.name, **dict(entity))
-
-    def delete(self, assignment_id: int) -> bool:
-        key = self._key(assignment_id)
-        entity = self._db.get(key)
-        if not entity:
+    def delete(self, assignment_id: int | str) -> bool:
+        try:
+            self._container.delete_item(item=str(assignment_id), partition_key=str(assignment_id))
+            return True
+        except CosmosResourceNotFoundError:
             return False
-
-        self._db.delete(key)
-        return True
-
-    def get_past_deadline(self) -> list[Assignment]:
-        now = datetime.now(timezone.utc)
-
-        query = self._db.query(kind=KIND)
-        query.add_filter("stop_submit_time", "<=", now)
-
-        results = query.fetch()
-
-        assignments = []
-        for entity in results:
-            assignments.append(
-                Assignment(id=entity.key.id or entity.key.name, **dict(entity))
-            )
-        return assignments
-
-    def get_all_ordered_by_submissions(self) -> list[Assignment]:
-        query = self._db.query(kind=KIND)
-        query.order = ["-submission_count"]  # descending
-
-        results = query.fetch()
-
-        assignments = []
-        for entity in results:
-            assignments.append(
-                Assignment(id=entity.key.id or entity.key.name, **dict(entity))
-            )
-        return assignments

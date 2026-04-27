@@ -1,34 +1,32 @@
-from google.cloud import datastore
+from azure.cosmos.exceptions import CosmosResourceNotFoundError, CosmosResourceExistsError
 
-from app.core.datastore_client import get_datastore_client
+from app.core.datastore_client import get_container
 from app.models.other_event import OtherEvent
 
 KIND = "other-events"
 
 class OtherEventRepository:
     def __init__(self):
-        self._db: datastore.Client = get_datastore_client()
-
-    def _key(self, event_id: str):
-        return self._db.key(KIND, event_id)
+        # Gets or creates the Cosmos container for idempotency tracking
+        self._container = get_container(KIND)
 
     def exists(self, event_id: str) -> bool:
-        key = self._key(event_id)
-        entity = self._db.get(key)
-        return entity is not None
+        try:
+            # Attempt to read by event_id (which we will use as the document id)
+            self._container.read_item(item=event_id, partition_key=event_id)
+            return True
+        except CosmosResourceNotFoundError:
+            return False
 
     def create(self, event_id: str) -> OtherEvent:
-        key = self._key(event_id)
-
-        # Prevent overwrite if already exists
-        if self._db.get(key):
+        # Use event_id as the Cosmos document 'id' property as well
+        event = OtherEvent(id=event_id, event_id=event_id)
+        data = event.model_dump()
+        
+        try:
+            # create_item throws an error if it already exists, enforcing our check
+            self._container.create_item(data)
+        except CosmosResourceExistsError:
             raise ValueError(f"OtherEvent with event_id '{event_id}' already exists")
 
-        event = OtherEvent(event_id=event_id)
-        entity = datastore.Entity(key=key)
-
-        entity.update(event.model_dump(exclude={"id"}))
-        self._db.put(entity)
-
-        event.id = event_id  # key name = event_id
         return event

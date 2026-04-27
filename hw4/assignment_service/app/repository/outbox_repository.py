@@ -1,61 +1,46 @@
-from google.cloud import datastore
+import uuid
+from typing import Optional
+from azure.cosmos.exceptions import CosmosResourceNotFoundError
 
-from app.core.datastore_client import get_datastore_client
+from app.core.datastore_client import get_container
 from app.models.outbox import OutboxEvent
 
 KIND = "outbox"
 
 class OutboxRepository:
     def __init__(self):
-        self._db: datastore.Client = get_datastore_client()
-
-    def _key(self, event_id: str | None = None):
-        if event_id:
-            return self._db.key(KIND, event_id)
-        return self._db.key(KIND)
+        # Gets or creates the Cosmos container for the outbox
+        self._container = get_container(KIND)
 
     def create(self, event: OutboxEvent) -> OutboxEvent:
-        key = self._key()
-        entity = datastore.Entity(key=key)
-
-        data = event.model_dump(exclude={"id"})
-        entity.update(data)
-
-        self._db.put(entity)
-
-        event.id = entity.key.id or entity.key.name
+        # Cosmos DB requires the document 'id' to be a string
+        event.id = str(uuid.uuid4())
+        
+        data = event.model_dump()
+        self._container.upsert_item(data)
+        
         return event
 
     def get_pending(self) -> list[OutboxEvent]:
-        query = self._db.query(kind=KIND)
-        query.add_filter("pending", "=", True)
-
-        results = query.fetch()
-
-        events = []
-        for entity in results:
-            events.append(
-                OutboxEvent(id=entity.key.id or entity.key.name, **dict(entity))
-            )
-        return events
+        # Standard Cosmos DB SQL query
+        items = list(self._container.query_items(
+            query="SELECT * FROM c WHERE c.pending = true",
+            enable_cross_partition_query=True
+        ))
+        return [OutboxEvent(**item) for item in items]
 
     def mark_as_published(self, event_id: str) -> None:
-        key = self._key(event_id)
-        entity = self._db.get(key)
-
-        if not entity:
+        try:
+            # Fetch by document ID and partition key
+            item = self._container.read_item(item=event_id, partition_key=event_id)
+            item["pending"] = False
+            self._container.upsert_item(item)
+        except CosmosResourceNotFoundError:
             return
 
-        entity["pending"] = False
-        self._db.put(entity)
-
     def get_all(self) -> list[OutboxEvent]:
-        query = self._db.query(kind=KIND)
-        results = query.fetch()
-
-        events = []
-        for entity in results:
-            events.append(
-                OutboxEvent(id=entity.key.id or entity.key.name, **dict(entity))
-            )
-        return events
+        items = list(self._container.query_items(
+            query="SELECT * FROM c",
+            enable_cross_partition_query=True
+        ))
+        return [OutboxEvent(**item) for item in items]

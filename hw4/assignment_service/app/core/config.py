@@ -1,13 +1,22 @@
-from pydantic_settings import BaseSettings
-
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
-    SERVICE_NAME: str
-    PROJECT_ID: str
-    PUBSUB_TOPIC: str
+    SERVICE_NAME: str = "assignments-service"
+    
+    # ---- Azure Cosmos DB (replaces GCP Datastore) ----
+    cosmos_endpoint: str
+    cosmos_database: str = "comparena-cosmos"
 
-    class Config:
-        env_file = "settings.env"
+    # ---- Azure Service Bus (replaces GCP Pub/Sub) ----
+    service_bus_namespace: str
+    service_bus_topic: str = "assignments-events"
+    service_bus_subscription: str = "assignments-sub"
 
+    model_config = SettingsConfigDict(
+        env_file="settings.env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+    )
 
 settings = Settings()
