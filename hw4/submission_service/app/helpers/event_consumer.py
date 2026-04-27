@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 EventHandler = Callable[[dict], Awaitable[None]]
 
 async def _handle_user_deleted(envelope: dict) -> None:
-    event_data = envelope
+    event_data = json.loads(envelope["data"])
     event_id = envelope["event_id"]
     
     repo = OtherEventRepository()
@@ -38,7 +38,7 @@ async def _handle_user_deleted(envelope: dict) -> None:
     repo.create(event_id)
 
 async def _handle_assignment_deleted(envelope: dict) -> None:
-    event_data = envelope
+    event_data = json.loads(envelope["data"])
     event_id = envelope["event_id"]
     
     repo = OtherEventRepository()
@@ -64,6 +64,7 @@ HANDLERS: dict[str, EventHandler] = {
 }
 
 async def _dispatch(envelope: dict) -> None:
+    print("Dispatching event:", envelope)
     event_type = envelope.get("event_type")
 
     handler = HANDLERS.get(event_type)

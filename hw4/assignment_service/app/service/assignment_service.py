@@ -51,7 +51,10 @@ class AssignmentService:
         return self._to_response(assignment)
     
     async def delete_assignment(self, assignment_id: int) -> None:
-        self._repo.delete_with_outbox(assignment_id)
+        result = self._repo.delete_with_outbox(assignment_id)
+        if result == None:
+            raise HTTPException(status_code=404, detail="Assignment not found")
+
         await OutboxService().process_pending_events()
 
     def get_assignments(self) -> list[AssignmentResponseDTO]:

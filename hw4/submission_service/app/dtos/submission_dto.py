@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 class CreateSubmissionDTO(BaseModel):
     user_id: int | None = None
-    assignment_id: int
+    assignment_id: str
     filepath: str
 
 class UpdateSubmissionDTO(BaseModel):
@@ -13,7 +13,7 @@ class UpdateSubmissionDTO(BaseModel):
 class SubmissionResponseDTO(BaseModel):
     id: str
     user_id: int
-    assignment_id: int
+    assignment_id: str
     filepath: str
     status: str
     created_at: datetime

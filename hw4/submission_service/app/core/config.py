@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     cosmos_database: str = "comparena-cosmos"         # ≈ old Datastore database "cloud-hw1"
 
     azure_storage_account_name: str = "comparena"
+    azure_container_name: str = "submissions-blobs"
     
     model_config = SettingsConfigDict(
         env_file="settings.env",

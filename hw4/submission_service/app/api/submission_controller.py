@@ -16,14 +16,14 @@ def get_id(token: dict):
 
 @router.post("/", response_model=SubmissionResponseDTO, status_code=status.HTTP_201_CREATED)
 async def create(
-    assignment_id: int = Form(...),
+    assignment_id: str = Form(...),
     file: UploadFile = File(...),
     user_token: dict = Depends(extract_user_token)
 ):
     return await _service.create(assignment_id, get_id(user_token), file)
 
 @router.get("/assignment/{assignment_id}", response_model=list[SubmissionResponseDTO])
-async def get_by_assignment(assignment_id: int, user_token: dict = Depends(extract_user_token)):
+async def get_by_assignment(assignment_id: str, user_token: dict = Depends(extract_user_token)):
     return _service.get_all_by_assignment(assignment_id)
 
 @router.get("/{sub_id}/file", summary="Download submission file")

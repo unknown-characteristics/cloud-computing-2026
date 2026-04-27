@@ -5,7 +5,7 @@ from pydantic import BaseModel
 class Submission(BaseModel):
     id: Optional[str] = None
     user_id: int
-    assignment_id: int
+    assignment_id: str
     filepath: str
     status: str = "active" # poate fi 'active' sau 'deleted' (soft delete)
     created_at: Optional[datetime] = None

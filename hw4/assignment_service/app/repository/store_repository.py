@@ -169,6 +169,9 @@ class StoreRepository:
         """
         Atomically deletes an assignment and records the deletion in the outbox.
         """
+        assignment = self.get_assignment_by_id(assignment_id)
+        if not assignment:
+            return None
         outbox_data = {
             "id": str(uuid.uuid4()),
             "partition_id": assignment_id, # Shared PK
@@ -176,7 +179,9 @@ class StoreRepository:
             "event_id": str(uuid.uuid4()),
             "event_type": "assignment.deleted",
             "data": json.dumps({
-                    "assignment_id": assignment_id
+                    "assignment_id": assignment_id, 
+                    "name": assignment.name, 
+                    "creator_id": assignment.creator_id
                 }),
             "pending": True
         }

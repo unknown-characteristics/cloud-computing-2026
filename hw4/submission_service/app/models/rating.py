@@ -6,7 +6,7 @@ class Rating(BaseModel):
     id: Optional[str] = None
     user_id: int
     submission_id: str
-    assignment_id: int
+    assignment_id: str
     score: int
     comment: Optional[str] = None
     status: str = "active"  # Pentru soft-delete la rating
