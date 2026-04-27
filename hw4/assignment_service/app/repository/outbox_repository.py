@@ -5,7 +5,7 @@ from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from app.core.datastore_client import get_container
 from app.models.outbox import OutboxEvent
 
-KIND = "outbox"
+KIND = "asgn-outbox"
 
 class OutboxRepository:
     def __init__(self):

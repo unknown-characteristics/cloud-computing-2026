@@ -3,7 +3,7 @@ from azure.cosmos.exceptions import CosmosResourceNotFoundError, CosmosResourceE
 from app.core.datastore_client import get_container
 from app.models.other_event import OtherEvent
 
-KIND = "other-events"
+KIND = "asgn-other-events"
 
 class OtherEventRepository:
     def __init__(self):

@@ -6,7 +6,7 @@ from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from app.core.datastore_client import get_container
 from app.models.assignment import Assignment
 
-KIND = "assignments"
+KIND = "asgn-assignments"
 
 class AssignmentRepository:
     def __init__(self):
