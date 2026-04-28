@@ -33,7 +33,7 @@ export function useCreateRating() {
       return data
     },
     onSuccess: (_, vars) => {
-      qc.invalidateQueries({ queryKey: ['ratings', vars.submissionId] })
+      qc.invalidateQueries({ queryKey: ['ratings', vars.submission_id] })
       toast.success('Rating submitted!')
     },
     onError: (err) => {

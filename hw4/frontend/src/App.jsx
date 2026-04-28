@@ -2,8 +2,8 @@
  * App.jsx — Root component.
  * Sets up React Router, global layout (Navbar), AuthModal, and page transitions.
  */
-import { useState } from 'react'
-import { Routes, Route, useLocation } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import Navbar from './components/Navbar'
 import AuthModal from './components/AuthModal'
@@ -17,6 +17,18 @@ import Profile from './pages/Profile'
 export default function App() {
   const [authOpen, setAuthOpen] = useState(false)
   const location = useLocation()
+  const navigate = useNavigate()
+
+  // When JWT expires the axios interceptor fires 'session:expired'.
+  // Navigate home and open the auth modal so the user can sign in again.
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      navigate('/')
+      setAuthOpen(true)
+    }
+    window.addEventListener('session:expired', handleSessionExpired)
+    return () => window.removeEventListener('session:expired', handleSessionExpired)
+  }, [navigate])
 
   return (
     <>

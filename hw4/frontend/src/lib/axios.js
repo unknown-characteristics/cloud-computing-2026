@@ -1,5 +1,9 @@
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/authStore';
+
+// Guard so multiple concurrent 401 responses only trigger one logout
+let _loggingOut = false;
 
 // 1. Creăm instanța de bază
 const api = axios.create({
@@ -40,12 +44,16 @@ api.interceptors.response.use(
     if (error.response) {
       // 401 înseamnă că token-ul lipsește, e invalid sau a expirat
       if (error.response.status === 401) {
-        console.warn("Token expirat sau invalid. Delogare automată...");
-
-        // Apelăm funcția de logout din store-ul tău Zustand
         const state = useAuthStore.getState();
-        if (state.logout) {
+        // Only act if the user was actually logged in and we're not already logging out
+        if (state.token && !_loggingOut) {
+          _loggingOut = true;
+          console.warn("Token expirat sau invalid. Delogare automată...");
           state.logout();
+          toast.error('Your session has expired. Please sign in again.');
+          window.dispatchEvent(new CustomEvent('session:expired'));
+          // Reset the guard after a short delay
+          setTimeout(() => { _loggingOut = false; }, 1500);
         }
       }
     }

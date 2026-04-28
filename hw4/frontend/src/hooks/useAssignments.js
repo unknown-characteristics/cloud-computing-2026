@@ -68,7 +68,7 @@ export function useUpdateAssignment() {
     },
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: ['assignments'] })
-      qc.invalidateQueries({ queryKey: ['assignments', vars.id] })
+      qc.invalidateQueries({ queryKey: ['assignment', vars.id] })
       toast.success('Assignment updated!')
     },
     onError: (err) => {
