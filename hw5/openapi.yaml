@@ -1,0 +1,1005 @@
+openapi: 3.0.3
+
+info:
+  title: PropagandaLens API
+  description: |
+    REST API for the PropagandaLens propaganda detection platform.
+    Provides article analysis, feedback collection, source reputation scoring,
+    and analytics endpoints.
+
+    **Authentication:** All protected endpoints require a Cloud Identity Platform JWT Bearer token.
+    Obtain a token via `POST /v1/auth/token` using a valid Cloud Identity Platform credential.
+
+    **Rate limiting:** Enforced per user UID based on subscription tier.
+    - Free: 5 requests/day
+    - Premium: 20 requests/day, access to personal export
+    - Business: unlimited, access to bulk operations & global export
+
+    **Versioning:** This document describes API version 1 (`/v1/`).
+  version: "1.0.0"
+  contact:
+    name: PropagandaLens Team
+    email: api@propagandalens.ro
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://api.propagandalens.ro/v1
+    description: Production (Google Cloud Run, europe-west1)
+  - url: https://api-staging.propagandalens.ro/v1
+    description: Staging environment
+
+tags:
+  - name: Analysis
+    description: Article analysis and result retrieval
+  - name: Feedback
+    description: User feedback on analysis results
+  - name: Sources
+    description: Source reputation and statistics
+  - name: Analytics
+    description: Aggregated platform analytics (Premium+)
+  - name: User
+    description: User profile and subscription management
+  - name: Auth
+    description: Authentication
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  PATHS
+# ─────────────────────────────────────────────────────────────────────────────
+
+paths:
+
+  # ── Authentication ────────────────────────────────────────────────────────
+
+  /auth/token:
+    post:
+      tags: [Auth]
+      summary: Exchange Cloud Identity Platform credential for API session token
+      description: |
+        Accepts a Cloud Identity Platform ID token and returns a PropagandaLens session JWT
+        enriched with the user's subscription tier information.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+            example:
+              idToken: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+      responses:
+        "200":
+          description: Session token created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "422":
+          $ref: '#/components/responses/ValidationError'
+
+  # ── Analysis ─────────────────────────────────────────────────────────────
+
+  /analyze:
+    post:
+      tags: [Analysis]
+      summary: Submit an article for propaganda analysis
+      description: |
+        Submits article text for propaganda technique detection.
+
+        **Cache behavior:** If a SHA-256 hash of the submitted text matches a
+        cached result in Cloud Memorystore (Redis), a synchronous response with
+        `status: "completed"` and the full `result` is returned immediately.
+
+        **Async behavior:** On cache miss, the request is queued in Pub/Sub and
+        a `jobId` is returned with `status: "processing"`. The client should
+        either poll `GET /analyze/{jobId}` or listen for a push notification
+        via Firestore real-time listener (recommended for browser extensions).
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyzeRequest'
+            example:
+              text: "Tradiționaliștii adevărați știu că dacă nu acționăm ACUM, totul va fi pierdut pentru totdeauna. Nu există alternativă."
+              url: "https://example.ro/articol-test"
+      responses:
+        "200":
+          description: Result returned synchronously (cache hit)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyzeResponseSync'
+        "202":
+          description: Request accepted for async processing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyzeResponseAsync'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        "422":
+          $ref: '#/components/responses/ValidationError'
+
+  /analyze/bulk:
+    post:
+      tags: [Analysis]
+      summary: Submit an array of articles for propaganda analysis
+      description: |
+        Submits multiple articles at once for propaganda analysis. Only available to Business subscribers.
+        Returns an array of analysis responses.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AnalyzeRequest'
+      responses:
+        "200":
+          description: All results returned synchronously (cache hits)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyzeResponseBulk'
+        "202":
+          description: Some requests were accepted for async processing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyzeResponseBulk'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        "422":
+          $ref: '#/components/responses/ValidationError'
+
+  /analyze/{jobId}:
+    get:
+      tags: [Analysis]
+      summary: Poll for async analysis result
+      description: |
+        Returns the current status and result (if completed) of an async
+        analysis job. Clients should implement exponential backoff.
+        Recommended polling interval: 1s → 2s → 4s → max 8s.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The job ID returned by POST /analyze
+      responses:
+        "200":
+          description: Job status (and result if completed)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyzeResult'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  # ── Feedback ──────────────────────────────────────────────────────────────
+
+  /feedback:
+    post:
+      tags: [Feedback]
+      summary: Submit user feedback on an analysis result
+      description: |
+        Records a user correction for an analysis result.
+        Feedback is used to improve the ML model via the automated MLOps
+        pipeline (triggered after accumulating ≥100 validated feedback items).
+
+        The user submits a span of the article and the technique (if any) used in that span.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackRequest'
+            examples:
+              propaganda_found:
+                value:
+                  jobId: "550e8400-e29b-41d4-a716-446655440000"
+                  spanText: "Ne vor ucide copiii!"
+                  contextText: "Nu-i primiți în țara noastră. Ne vor ucide copiii!"
+                  correctedTechnique: "APPEAL_TO_FEAR_PREJUDICE"
+      responses:
+        "201":
+          description: Feedback recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackResponse'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "422":
+          $ref: '#/components/responses/ValidationError'
+
+  # ── Sources ───────────────────────────────────────────────────────────────
+
+  /sources/{domain}:
+    get:
+      tags: [Sources]
+      summary: Get reputation score and statistics for a news source
+      description: |
+        Returns the aggregated reputation score for a domain, recalculated
+        daily by a Cloud Scheduler job. No authentication required.
+        Scores are available for domains with at least 10 analyzed articles
+        in the last 30 days.
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "digi24.ro"
+        - name: period
+          in: query
+          schema:
+            type: integer
+            enum: [7, 30, 90]
+            default: 30
+          description: Analysis period in days
+      responses:
+        "200":
+          description: Source reputation data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceReputation'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  /sources:
+    get:
+      tags: [Sources]
+      summary: List all sources with reputation scores (paginated)
+      parameters:
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [score_asc, score_desc, analyzed_count_desc]
+            default: score_desc
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        "200":
+          description: Paginated list of sources
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceList'
+
+  # ── Analytics ─────────────────────────────────────────────────────────────
+
+  /analytics/trends:
+    get:
+      tags: [Analytics]
+      summary: Get propaganda technique trends over a time period
+      description: |
+        Returns aggregated counts and proportions of detected propaganda
+        techniques across all analyses in the specified period.
+        Requires Premium or Business subscription.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          example: "2026-04-01"
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          example: "2026-04-30"
+        - name: domain
+          in: query
+          schema:
+            type: string
+          description: Optional filter by domain
+        - name: technique
+          in: query
+          schema:
+            type: string
+          description: Optional filter by technique name
+      responses:
+        "200":
+          description: Trend data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrendsResponse'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+
+  /analytics/export:
+    get:
+      tags: [Analytics]
+      summary: Export analysis data as CSV or JSON
+      description: |
+        Exports the user's analysis history (and optionally global aggregates
+        for Business tier) as a downloadable file.
+        Requires Premium or Business subscription.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: scope
+          in: query
+          schema:
+            type: string
+            enum: [personal, global]
+            default: personal
+          description: |
+            `global` available for Business tier only.
+            Returns anonymized platform-wide data.
+      responses:
+        "200":
+          description: File download
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExportRecord'
+            text/csv:
+              schema:
+                type: string
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+
+  # ── User ─────────────────────────────────────────────────────────────────
+
+  /user/me:
+    get:
+      tags: [User]
+      summary: Get current user profile and subscription status
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /user/alerts:
+    get:
+      tags: [User]
+      summary: List configured source alerts
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: List of configured alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AlertConfig'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      tags: [User]
+      summary: Create a source alert (Premium+)
+      description: |
+        Creates an alert that notifies the user when a specified source
+        exceeds a propaganda score threshold. Available for Premium and
+        Business tier users.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertConfig'
+            example:
+              domain: "example.ro"
+              thresholdScore: 0.7
+      responses:
+        "201":
+          description: Alert created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertConfig'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+  
+  /user/alerts/{alertId}:
+    parameters:
+      - name: alertId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: The unique identifier of the alert to modify or delete
+    
+    patch:
+      tags: [User]
+      summary: Update an existing source alert (Premium+)
+      description: |
+        Modifies an existing alert's threshold score or domain.
+        Available for Premium and Business tier users.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                domain:
+                  type: string
+                  example: "example.ro"
+                  description: The domain to track
+                thresholdScore:
+                  type: number
+                  format: float
+                  minimum: 0
+                  maximum: 1
+                  description: Trigger alert when domain's weekly avg reputation falls below this value
+            example:
+              thresholdScore: 0.8
+      responses:
+        "200":
+          description: Alert updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertConfig'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "422":
+          $ref: '#/components/responses/ValidationError'
+
+    delete:
+      tags: [User]
+      summary: Delete a source alert (Premium+)
+      description: |
+        Removes an existing source alert.
+        Available for Premium and Business tier users.
+      security:
+        - BearerAuth: []
+      responses:
+        "204":
+          description: Alert deleted successfully
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  COMPONENTS
+# ─────────────────────────────────────────────────────────────────────────────
+
+components:
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Cloud Identity Platform JWT token obtained via POST /v1/auth/token
+
+  # ── Schemas ───────────────────────────────────────────────────────────────
+
+  schemas:
+
+    AuthRequest:
+      type: object
+      required: [idToken]
+      properties:
+        idToken:
+          type: string
+          description: Cloud Identity Platform ID token obtained from the client-side SDK
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: PropagandaLens session JWT
+        expiresIn:
+          type: integer
+          description: Token validity in seconds (default 3600)
+        tier:
+          type: string
+          enum: [free, premium, business]
+
+    AnalyzeRequest:
+      type: object
+      required: [text]
+      properties:
+        text:
+          type: string
+          minLength: 50
+          maxLength: 50000
+          description: Plain text of the article to analyze (HTML stripped)
+        url:
+          type: string
+          format: uri
+          description: Original URL of the article (optional, used for source tracking)
+
+    AnalyzeResponseSync:
+      type: object
+      properties:
+        jobId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [completed]
+        cached:
+          type: boolean
+          description: True if result was served from cache
+        result:
+          $ref: '#/components/schemas/AnalysisResult'
+
+    AnalyzeResponseAsync:
+      type: object
+      properties:
+        jobId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [processing, queued]
+        estimatedWaitMs:
+          type: integer
+          description: Estimated processing time in milliseconds
+        firestorePath:
+          type: string
+          description: |
+            Firestore document path to listen for the result via real-time listener.
+            Format: results/{uid}/{jobId}
+
+    AnalyzeResponseBulk:
+      type: object
+      properties:
+        syncResults:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnalyzeResponseSync'
+        asyncResults:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnalyzeResponseSync'
+
+    AnalyzeResult:
+      type: object
+      properties:
+        jobId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, processing, completed, failed]
+        cached:
+          type: boolean
+        modelVersion:
+          type: string
+          description: Model version used for this analysis (e.g. "v2.3.1")
+        result:
+          $ref: '#/components/schemas/AnalysisResult'
+        error:
+          type: string
+          description: Error message if status is "failed"
+
+    AnalysisResult:
+      type: object
+      properties:
+        spans:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpanAnalysis'
+        sourceReputation:
+          $ref: '#/components/schemas/SourceReputationSummary'
+        processingTimeMs:
+          type: integer
+
+    TechniqueScore:
+      type: object
+      properties:
+        technique:
+          $ref: '#/components/schemas/TechniqueType'
+        score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        label:
+          type: string
+          description: Human-readable label
+
+    TechniqueType:
+      type: string
+      enum:
+        - LOADED_LANGUAGE
+        - NAME_CALLING_LABELING
+        - REPETITION
+        - EXAGGERATION_MINIMIZATION
+        - DOUBT
+        - APPEAL_TO_FEAR_PREJUDICE
+        - BLACK_AND_WHITE_FALLACY
+        - CAUSAL_OVERSIMPLIFICATION
+        - SLOGANS
+        - APPEAL_TO_AUTHORITY
+        - BANDWAGON_REDUCTIO_AD_HITLERUM
+        - WHATABOUTISM_RED_HERRING_STRAW_MAN
+        - THOUGHT_TERMINATING_CLICHE
+        - FLAG_WAVING
+      description: Propaganda technique identifier (SemEval-2020 taxonomy)
+
+    SpanAnalysis:
+      type: object
+      properties:
+        spanId:
+          type: string
+          description: Span identifier (e.g. "s_001", "s_002")
+        span:
+          $ref: '#/components/schemas/SpanBoundary'
+        detectedTechniques:
+          type: array
+          items:
+            $ref: '#/components/schemas/TechniqueScore'
+
+    SourceReputationSummary:
+      type: object
+      properties:
+        domain:
+          type: string
+        reputationScore:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          nullable: true
+          description: Null if fewer than 10 articles analyzed in the last 30 days
+        analyzedCount:
+          type: integer
+        lastUpdated:
+          type: string
+          format: date-time
+
+    SourceReputation:
+      type: object
+      properties:
+        domain:
+          type: string
+        reputationScore:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        analyzedCount:
+          type: integer
+        analyzedCountPeriod:
+          type: integer
+          description: Number of articles analyzed in the selected period
+        topTechniques:
+          type: array
+          items:
+            $ref: '#/components/schemas/TechniqueScore'
+          description: The most commonly found techniques in the source's articles, along with their probabilities.
+        scoreHistory:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              score:
+                type: number
+                format: float
+        lastUpdated:
+          type: string
+          format: date-time
+
+    SourceList:
+      type: object
+      properties:
+        sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/SourceReputationSummary'
+        total:
+          type: integer
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        totalPages:
+          type: integer
+
+    SpanBoundary:
+      type: object
+      properties:
+        start:
+          type: integer
+          description: The index of the first character in the span.
+        end:
+          type: integer
+          description: The index of the character after the last character in the span.
+
+    FeedbackRequest:
+      type: object
+      required: [jobId, start, end, contextText, correctedTechnique]
+      properties:
+        jobId:
+          type: string
+          format: uuid
+        span:
+          $ref: '#/components/schemas/SpanBoundary'
+        contextText:
+          type: string
+          description: The text of the article that surrounds the span.
+        correctedTechnique:
+          type: string
+          description: The technique identified in the span by the user. Use "NONE" to indicate no propaganda in the span.
+
+    FeedbackResponse:
+      type: object
+      properties:
+        feedbackId:
+          type: string
+          format: uuid
+        accepted:
+          type: boolean
+        message:
+          type: string
+
+    TrendsResponse:
+      type: object
+      properties:
+        period:
+          type: object
+          properties:
+            from:
+              type: string
+              format: date
+            to:
+              type: string
+              format: date
+        totalArticlesAnalyzed:
+          type: integer
+        techniques:
+          type: array
+          items:
+            type: object
+            properties:
+              technique:
+                $ref: "#/components/schemas/TechniqueType"
+              count:
+                type: integer
+
+    ExportRecord:
+      type: object
+      properties:
+        jobId:
+          type: string
+          format: uuid
+        analyzedAt:
+          type: string
+          format: date-time
+        url:
+          type: string
+          nullable: true
+        domain:
+          type: string
+          nullable: true
+        articleHash:
+          type: string
+        modelVersion:
+          type: string
+        propagandaPercentage:
+          type: number
+          format: float
+        techniques:
+          type: array
+          items:
+            type: object
+            properties:
+              technique_name:
+                $ref: '#/components/schemas/TechniqueType'
+              count:
+                type: integer
+
+    UserProfile:
+      type: object
+      properties:
+        uid:
+          type: string
+        email:
+          type: string
+          format: email
+        tier:
+          type: string
+          enum: [free, premium, business]
+        dailyUsed:
+          type: integer
+          description: Number of analyses performed today
+        dailyLimit:
+          type: integer
+          description: Daily analysis limit (-1 = unlimited)
+        memberSince:
+          type: string
+          format: date-time
+        subscriptionExpiresAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    AlertConfig:
+      type: object
+      required: [domain, thresholdScore]
+      properties:
+        alertId:
+          type: string
+          format: uuid
+          readOnly: true
+        domain:
+          type: string
+          example: "example.ro"
+        thresholdScore:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Trigger alert when domain's weekly avg reputation falls below this value
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+
+  # ── Responses ─────────────────────────────────────────────────────────────
+
+  responses:
+
+    Unauthorized:
+      description: Missing or invalid authentication token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: UNAUTHORIZED
+            message: "Invalid or expired authentication token."
+
+    Forbidden:
+      description: Authenticated but insufficient subscription tier
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: INSUFFICIENT_TIER
+            message: "This endpoint requires a Premium or Business subscription."
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: NOT_FOUND
+            message: "The requested resource was not found."
+
+    RateLimited:
+      description: Daily analysis limit exceeded
+      headers:
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+        X-RateLimit-Reset:
+          schema:
+            type: string
+            format: date-time
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: RATE_LIMIT_EXCEEDED
+            message: "Daily analysis limit of 5 reached. Upgrade to Premium for unlimited access."
+
+    ValidationError:
+      description: Request body validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: VALIDATION_ERROR
+            message: "Request validation failed."
+            details:
+              text: "must be at least 50 characters"

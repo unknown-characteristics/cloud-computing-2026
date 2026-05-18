@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PropagandaLens – Documentație de Specificații al Proiectului</title>
+<style>
+/* ── Base ───────────────────────────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;font-size:11pt;color:#202124;line-height:1.6;background:#fff}
+/* ── Page layout ────────────────────────────────────────────────────── */
+.page{max-width:850px;margin:0 auto;padding:0 60px}
+/* ── Typography ─────────────────────────────────────────────────────── */
+h1{font-size:22pt;color:#202124;margin:32px 0 12px;padding-bottom:6px;border-bottom:3px solid #1a73e8;page-break-after:avoid}
+h2{font-size:15pt;color:#1a73e8;margin:24px 0 10px;page-break-after:avoid}
+h3{font-size:12pt;color:#202124;margin:18px 0 8px;font-weight:700;page-break-after:avoid}
+p{margin:8px 0;text-align:justify}
+ul,ol{margin:8px 0 8px 28px}
+li{margin:4px 0}
+strong{color:#202124}
+/* ── Cover ───────────────────────────────────────────────────────────── */
+.cover{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:60px 40px;page-break-after:always}
+.cover-title{font-size:42pt;font-weight:900;color:#1a73e8;margin-bottom:12px;letter-spacing:-1px}
+.cover-subtitle{font-size:16pt;color:#5f6368;margin-bottom:60px;font-weight:400}
+.cover-doc{font-size:13pt;font-weight:700;color:#202124;margin-bottom:8px}
+.cover-course{font-size:11pt;color:#5f6368;margin-bottom:60px}
+.cover-year{font-size:13pt;color:#202124}
+/* ── TOC ─────────────────────────────────────────────────────────────── */
+.toc{page-break-after:always;padding:40px 0}
+.toc h1{margin-bottom:20px}
+.toc-entry{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dotted #dadce0}
+.toc-entry a{text-decoration:none;color:#1a73e8}
+.toc-entry a:hover{text-decoration:underline}
+.toc-sub{padding-left:20px;font-size:10pt;color:#5f6368}
+/* ── Abstract ────────────────────────────────────────────────────────── */
+.abstract{background:#e8f0fe;border-left:4px solid #1a73e8;padding:20px 24px;margin:24px 0;border-radius:0 8px 8px 0;page-break-after:always}
+.abstract strong{display:block;font-size:12pt;color:#1a73e8;margin-bottom:8px}
+/* ── Tables ──────────────────────────────────────────────────────────── */
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:10pt;page-break-inside:avoid}
+thead tr{background:#1a73e8;color:#fff}
+thead th{padding:10px 12px;text-align:left;font-weight:700}
+tbody tr:nth-child(even){background:#f8f9fa}
+tbody td{padding:8px 12px;border-bottom:1px solid #dadce0;vertical-align:top}
+tbody tr:hover{background:#e8f0fe}
+/* ── BMC Table ───────────────────────────────────────────────────────────── */
+.bmc-table{width:100%;border-collapse:separate;border-spacing:5px;margin:20px 0;font-size:9.5pt;table-layout:fixed}
+.bmc-table td{border:1px solid #dadce0;border-radius:6px;padding:12px 14px;vertical-align:top;background:#f8f9fa}
+.bmc-label{display:block;font-weight:700;font-size:8.5pt;color:#1a73e8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:7px;padding-bottom:5px;border-bottom:1px solid #dadce0}
+.bmc-table ul{padding-left:13px;margin:0}
+.bmc-table li{margin:3px 0;line-height:1.4}
+.bmc-cell-value{background:#e8f0fe;border:2px solid #1a73e8 !important}
+.bmc-cell-value .bmc-label{color:#1565c0;border-bottom-color:#1a73e8}
+.bmc-cell-costs{background:#fef7f7;border-color:#f5c6cb !important}
+.bmc-cell-costs .bmc-label{color:#c62828}
+.bmc-cell-revenue{background:#f0faf4;border-color:#a8d5b5 !important}
+.bmc-cell-revenue .bmc-label{color:#2e7d32}
+/* ── Code / API ──────────────────────────────────────────────────────── */
+.endpoint{background:#f8f9fa;border:1px solid #dadce0;border-radius:6px;padding:12px 16px;margin:10px 0;font-family:'Courier New',monospace;font-size:10pt}
+.method{display:inline-block;padding:2px 8px;border-radius:4px;font-weight:700;font-size:9pt;margin-right:8px}
+.method.post{background:#e8f5e9;color:#2e7d32}
+.method.get{background:#e3f2fd;color:#1565c0}
+/* ── Callout boxes ───────────────────────────────────────────────────── */
+.callout{border-left:4px solid #fbbc04;background:#fffde7;padding:14px 18px;margin:14px 0;border-radius:0 6px 6px 0;font-size:10.5pt}
+.callout.blue{border-color:#1a73e8;background:#e8f0fe}
+.callout.green{border-color:#1e8e3e;background:#e8f5e9}
+.callout.purple{border-color:#7b1fa2;background:#f3e5f5}
+.callout.red{border-color:#c62828;background:#fef7f7}
+/* ── Pricing cards ───────────────────────────────────────────────────── */
+.pricing-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin:20px 0}
+.pricing-card{border:2px solid #dadce0;border-radius:10px;padding:20px;text-align:center}
+.pricing-card.premium{border-color:#1a73e8}
+.pricing-card.business{border-color:#e65100}
+.pricing-card h3{margin:0 0 8px;font-size:14pt}
+.price{font-size:24pt;font-weight:900;color:#1a73e8;margin:8px 0}
+.price.business-price{color:#e65100}
+.price-note{font-size:9pt;color:#5f6368}
+.feature-list{list-style:none;margin:12px 0;padding:0;text-align:left}
+.feature-list li{padding:4px 0;font-size:10pt}
+.feature-list li::before{content:"✓ ";color:#1e8e3e;font-weight:700}
+.feature-list li.no::before{content:"✗ ";color:#d93025}
+/* ── Section break ───────────────────────────────────────────────────── */
+.section{padding:40px 0 20px;page-break-before:always}
+.section:first-of-type{page-break-before:avoid}
+/* ── Footer / header ─────────────────────────────────────────────────── */
+.doc-header{background:#fff;border-bottom:2px solid #dadce0;padding:10px 60px;position:sticky;top:0;z-index:100;display:flex;justify-content:space-between;align-items:center;font-size:9pt;color:#5f6368}
+/* ── Print ───────────────────────────────────────────────────────────── */
+@media print{
+  .doc-header{display:none}
+  body{font-size:10pt}
+  .cover{min-height:initial;padding:100px 40px}
+  h1{font-size:18pt}
+  h2{font-size:13pt}
+  .page{padding:0 40px}
+  .section{page-break-before:always}
+  .abstract{page-break-after:always}
+  .toc{page-break-after:always}
+  table{font-size:9pt}
+  .pricing-grid{grid-template-columns:1fr 1fr 1fr}
+  @page{margin:2cm 2.5cm;@bottom-center{content:counter(page)}}
+}
+hr.section-sep{border:none;border-top:1px solid #dadce0;margin:20px 0}
+</style>
+</head>
+<body>
+
+<div class="doc-header">
+  <span><strong>PropagandaLens</strong> — Documentație de Specificații al Proiectului</span>
+  <span>Cloud Computing — 2025/2026</span>
+</div>
+
+<div class="page">
+<div class="cover">
+  <div class="cover-title">PropagandaLens</div>
+  <div class="cover-subtitle">Platformă distribuită de detecție a propagandei în articole online</div>
+  <div class="cover-doc">Documentație de Specificații al Proiectului</div>
+  <div class="cover-course">Cloud Computing — Proiect Final</div>
+  <hr style="width:120px;border-color:#dadce0;margin:40px auto">
+  <div class="cover-year">2025 – 2026</div>
+</div>
+
+<!-- TABLE OF CONTENTS -->
+<div class="toc">
+  <h1>Cuprins</h1>
+  <div class="toc-entry"><a href="#abstract">Rezumat</a><span>2</span></div>
+  <div class="toc-entry"><a href="#s1">1. Introducere</a><span>3</span></div>
+  <div class="toc-sub"><div class="toc-entry"><a href="#s1_1">1.1 Contextul proiectului</a><span>3</span></div></div>
+  <div class="toc-sub"><div class="toc-entry"><a href="#s1_2">1.2 Obiectivele proiectului</a><span>3</span></div></div>
+  <div class="toc-entry"><a href="#s2">2. Studiu de Caz: Dezinformarea în Contextul Actual</a><span>4</span></div>
+  <div class="toc-sub"><div class="toc-entry"><a href="#s2_1">2.1 Fenomenul dezinformării la nivel internațional</a><span>4</span></div></div>
+  <div class="toc-sub"><div class="toc-entry"><a href="#s2_2">2.2 Contextul românesc</a><span>4</span></div></div>
+  <div class="toc-sub"><div class="toc-entry"><a href="#s2_3">2.3 Răspunsul legislativ și instituțional</a><span>5</span></div></div>
+  <div class="toc-entry"><a href="#s3">3. Analiza Soluțiilor Existente</a><span>6</span></div>
+  <div class="toc-entry"><a href="#s4">4. Soluția Propusă</a><span>8</span></div>
+  <div class="toc-entry"><a href="#s5">5. Tehnologii Utilizate și Justificarea Alegerilor</a><span>10</span></div>
+  <div class="toc-entry"><a href="#s6">6. Arhitectura Sistemului</a><span>12</span></div>
+  <div class="toc-sub"><div class="toc-entry"><a href="#s6_1">6.1 Prezentare generală</a><span>12</span></div></div>
+  <div class="toc-sub"><div class="toc-entry"><a href="#s6_2">6.2 Componente și responsabilități</a><span>13</span></div></div>
+  <div class="toc-sub"><div class="toc-entry"><a href="#s6_3">6.3 Alternativele analizate</a><span>17</span></div></div>
+  <div class="toc-entry"><a href="#s7">7. Specificații API (OpenAPI 3.0)</a><span>19</span></div>
+  <div class="toc-entry"><a href="#s8">8. Analiza Business</a><span>22</span></div>
+  <div class="toc-sub"><div class="toc-entry"><a href="#s8_1">8.1 Business Model Canvas</a><span>22</span></div></div>
+  <div class="toc-sub"><div class="toc-entry"><a href="#s8_2">8.2 Segmente de clienți</a><span>23</span></div></div>
+  <div class="toc-sub"><div class="toc-entry"><a href="#s8_3">8.3 Model de prețuri</a><span>24</span></div></div>
+  <div class="toc-sub"><div class="toc-entry"><a href="#s8_4">8.4 Canale și promovare</a><span>25</span></div></div>
+  <div class="toc-sub"><div class="toc-entry"><a href="#s8_5">8.5 Sustenabilitate și costuri</a><span>25</span></div></div>
+  <div class="toc-entry"><a href="#s9">9. Concluzii și Direcții Viitoare</a><span>26</span></div>
+  <div class="toc-entry"><a href="#s10">10. Aspecte Juridice: Drepturi de Autor și Termeni de Utilizare</a><span>27</span></div>
+  <div class="toc-sub"><div class="toc-entry"><a href="#s10_1">10.1 Cadrul legal aplicabil</a><span>27</span></div></div>
+  <div class="toc-sub"><div class="toc-entry"><a href="#s10_2">10.2 Mecanismul de feedback și procesarea temporară a conținutului</a><span>28</span></div></div>
+  <div class="toc-sub"><div class="toc-entry"><a href="#s10_3">10.3 Clauze obligatorii în Termenii și Condițiile platformei</a><span>29</span></div></div>
+  <div class="toc-entry"><a href="#refs">Referințe</a><span>31</span></div>
+</div>
+
+<!-- ABSTRACT -->
+<div id="abstract" class="abstract">
+  <strong>Rezumat</strong>
+  Prezentul document descrie arhitectura, tehnologiile și modelul de business al PropagandaLens, o platformă cloud-native formată dintr-o extensie de browser Chrome și un serviciu web care detectează tehnici de propagandă în articole online. Soluția valorifică un model de procesare a limbajului natural antrenat de echipă, specializat pe limbile română și engleză (arhitectură XLM-RoBERTa), a cărui inferență este efectuată pe Google Cloud Run. Platforma integrează un pipeline MLOps bazat pe Vertex AI Pipelines pentru reantrenarea automată a modelului pe baza feedback-ului colectat de la utilizatori, un sistem de caching distribuit implementat cu Cloud Memorystore (Redis), un motor de analiză pe BigQuery și un sistem de reputație al surselor actualizat periodic prin Cloud Scheduler. Documentul include, de asemenea, o analiză detaliată a aspectelor juridice legate de procesarea temporară a textelor jurnalistice în contextul feedback-ului și al reantrenării modelului, cu referire la cadrul legal european aplicabil. Modelul de business propus urmărește o abordare freemium, adresată atât utilizatorilor individuali, cât și instituțiilor de presă și organizațiilor de fact-checking.
+</div>
+
+<!-- SECTION 1 -->
+<div id="s1" class="section">
+<h1>1. Introducere</h1>
+
+<h2 id="s1_1">1.1 Contextul proiectului</h2>
+<p>Dezinformarea și propaganda digitală au devenit provocări sistemice ale societății contemporane, afectând procese democratice fundamentale, inclusiv alegerile libere, răspunsul la crize de sănătate publică și coeziunea socială. Instrumentele de detectare automată a conținutului manipulativ rămân rare, fragmentate și, în marea lor majoritate, inaccesibile utilizatorilor obișnuiți.</p>
+<p>PropagandaLens răspunde acestei lacune prin oferirea unui instrument simplu de utilizat — o extensie de browser — susținut de o infrastructură cloud scalabilă și un model de machine learning antrenat specific pentru detecția tehnicilor de propagandă, cu suport nativ pentru limbile română și engleză. Inovația centrală a proiectului constă în combinarea unui model bilingv propriu cu un pipeline MLOps complet automatizat care îmbunătățește continuu modelul pe baza feedback-ului real al utilizatorilor, și cu o platformă de analiză agregată publică bazată pe datele colectate.</p>
+
+<h2 id="s1_2">1.2 Obiectivele proiectului</h2>
+<ul>
+  <li>Dezvoltarea unei extensii Chrome funcționale (Manifest V3) care analizează conținut textual din articole online în timp real.</li>
+  <li>Implementarea unui serviciu de inferență scalabil pe Google Cloud Platform, capabil să gestioneze volume variate de cereri prin arhitectură event-driven.</li>
+  <li>Construirea unui pipeline MLOps automat (Vertex AI Pipelines) care reantrenează modelul când se acumulează suficient feedback validat.</li>
+  <li>Implementarea unui sistem de A/B testing pentru versiunile noi de model, cu rollback automat.</li>
+  <li>Crearea unei platforme web cu statistici agregate privind propaganda per sursă, perioadă și tehnică detectată.</li>
+  <li>Propunerea unui model de business viabil (freemium), cu potențial de scalare B2B.</li>
+  <li>Definirea unui cadru juridic transparent pentru procesarea temporară a conținutului în scopul reantrenării modelului.</li>
+</ul>
+</div>
+
+<!-- SECTION 2 -->
+<div id="s2" class="section">
+<h1>2. Studiu de Caz: Dezinformarea și Propaganda în Contextul Actual</h1>
+
+<h2 id="s2_1">2.1 Fenomenul dezinformării la nivel internațional</h2>
+<p>Dezinformarea organizată reprezintă una dintre cele mai documentate amenințări la adresa democrației digitale. Baza de date EUvsDisinfo a Serviciului European de Acțiune Externă (SEAE) înregistra, la sfârșitul anului 2024, <strong>peste 16.000 de cazuri de dezinformare documentate</strong>, distribuite în 45 de limbi și acoperind domenii precum securitate, sănătate, alegeri și migrație. Raportul Freedom House „Freedom on the Net 2024" constată că libertatea internetului a scăzut pentru al <strong>14-lea an consecutiv</strong> la nivel global, dezinformarea coordonată constituind unul dintre factorii principali.</p>
+<p>La nivel academic, competiția <strong>SemEval-2020 Task 11</strong> a definit și formalizat un set de 14 tehnici de propagandă detectabile automat în texte jurnalistice, printre care: apelul la emoție (<em>Appeal to Fear</em>), încărcătura emotivă a numelui (<em>Loaded Language</em>), falsele dichotomii (<em>Black-and-White Fallacy</em>), repetiția (<em>Repetition</em>) și atribuirea intenției fără dovezi (<em>Doubt</em>). Acest cadru academic constituie baza de referință pentru modelul propriu de detecție al PropagandaLens.</p>
+<p>Studiile Oxford Internet Institute documentează existența operațiunilor de manipulare a opiniei publice în cel puțin <strong>81 de țări</strong>, cu bugete estimate de miliarde de dolari anual. Conform <strong>Reuters Institute Digital News Report 2024</strong>, 56% din utilizatorii de internet din Europa declară dificultăți în distingerea știrilor reale de cele false — o cifră în creștere față de anii precedenți.</p>
+
+<h2 id="s2_2">2.2 Contextul românesc</h2>
+<p>România s-a confruntat în 2024 cu unul dintre cele mai documentate episoade de influență digitală din istoria sa recentă. Campania electorală pentru alegerile prezidențiale a fost marcată de o campanie virală pe platforma TikTok, investigată ulterior de Autoritatea Electorală Permanentă și de Consiliul Suprem de Apărare a Țării (CSAT). Raportul desecretizat al SRI a documentat o rețea coordonată de conturi și cheltuieli publicitare nedeclarate platformei. Ca urmare, Comisia Europeană a inițiat o procedură formală împotriva TikTok în baza <strong>Regulamentului privind Serviciile Digitale (DSA)</strong>.</p>
+<p>Conform sondajului Reuters Institute 2024 pentru România, <strong>62% dintre utilizatorii de internet</strong> declară că întâmpină dificultăți în identificarea știrilor false, iar 71% consideră că jurnaliștii și redacțiile au responsabilitatea principală în combaterea dezinformării. Centre for Media Pluralism and Media Freedom (EUI) plasează România în categoria țărilor cu <strong>risc mediu-ridicat</strong> privind pluralismul mediatic, indicând o vulnerabilitate structurală la campanii de dezinformare coordonate.</p>
+
+<div class="callout">
+  <strong>Relevanță directă pentru PropagandaLens:</strong> Niciuna dintre soluțiile de detecție identificate pe piață nu oferă suport nativ pentru limba română, nu dispune de un mecanism de feedback continuu și nu furnizează statistici agregate per sursă media românească. PropagandaLens adresează explicit aceste trei lacune.
+</div>
+
+<h2 id="s2_3">2.3 Răspunsul legislativ și instituțional</h2>
+<p>Regulamentul UE privind Serviciile Digitale (DSA), aplicabil integral din august 2023, impune platformelor mari obligații semnificative privind transparența algoritmică și moderarea conținutului manipulativ. Propunerea de Regulament privind Libertatea Presei (EMFA) extinde protecțiile jurnalistice. Aceste reglementări creează un context favorabil pentru instrumente de audit editorial, cum este PropagandaLens, care pot fi integrate în fluxurile de conformitate ale platformelor și redacțiilor. Cadrul legal european este analizat în detaliu în Secțiunea 10, cu referire specifică la implicațiile pentru procesarea textelor jurnalistice în scop de antrenament ML.</p>
+</div>
+
+<!-- SECTION 3 -->
+<div id="s3" class="section">
+<h1>3. Analiza Soluțiilor Existente</h1>
+
+<p>În urma unui proces de cercetare desfășurat pe Chrome Web Store, publicații de specialitate și rapoarte academice, au fost identificate șapte soluții cu funcționalitate înrudită. <strong>Propaganda Scanner Extension</strong> și <strong>False News Detector</strong> sunt extensiile cel mai direct comparabile cu PropagandaLens. Ambele au mai puțin de 10 utilizatori în Chrome Web Store, nu au recenzii, nu oferă documentație privind modelul utilizat și nu dispun de un sistem de actualizare continuă. Testele proprii ad-hoc au indicat o rată ridicată de fals-pozitive și incapacitatea de a identifica tehnici subtile de propagandă (de exemplu, Loaded Language în context pozitiv).</p>
+<p><strong>NewsGuard</strong> reprezintă cel mai matur produs din această categorie, cu o bază de utilizatori semnificativă și un model hibrid (evaluare umană + AI). Limitarea principală: ratinghează surse, nu articole individuale, și nu detectează cazurile în care o sursă credibilă publică ocazional conținut manipulativ. Prețul abonamentului și lipsa suportului pentru română reprezintă bariere suplimentare.</p>
+<p><strong>Ground News</strong> adoptă o abordare diferită — bias politic și comparare de perspective — ceea ce îl face o soluție complementară, nu concurentă directă.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Soluție</th><th>Tip</th><th>Model ML</th><th>Feedback loop</th>
+      <th>Analytics sursă</th><th>Suport RO</th><th>Preț</th><th>Utilizatori</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Propaganda Scanner</strong></td><td>Extensie Chrome</td><td>Da (nedocumentat)</td><td>Nu</td><td>Nu</td><td>Nu</td><td>Gratuit</td><td>&lt;10</td></tr>
+    <tr><td><strong>False News Detector</strong></td><td>Extensie Chrome</td><td>Hugging Face NLP</td><td>Nu</td><td>Nu</td><td>Nu</td><td>Gratuit</td><td>&lt;10</td></tr>
+    <tr><td><strong>NewsGuard</strong></td><td>Extensie + API</td><td>Manual + AI</td><td>Nu</td><td>Parțial</td><td>Nu</td><td>Abonament</td><td>&gt;1M</td></tr>
+    <tr><td><strong>Ground News</strong></td><td>Web + Extensie</td><td>Nu</td><td>Nu</td><td>Da (bias politic)</td><td>Nu</td><td>Freemium</td><td>&gt;100K</td></tr>
+    <tr><td><strong>NoBias</strong></td><td>Extensie Chrome</td><td>Da</td><td>Nu</td><td>Nu</td><td>Nu</td><td>Freemium</td><td>~10K</td></tr>
+    <tr><td><strong>InVID / WeVerify</strong></td><td>Extensie Chrome</td><td>Da (imagini/video)</td><td>Nu</td><td>Nu</td><td>Nu</td><td>Gratuit</td><td>&gt;100K</td></tr>
+    <tr><td><strong>FakerFact</strong></td><td>Extensie Chrome</td><td>Da (intenție text)</td><td>Nu</td><td>Nu</td><td>Nu</td><td>Gratuit</td><td>&lt;1K</td></tr>
+    <tr style="background:#e8f5e9;font-weight:700"><td><strong>PropagandaLens</strong></td><td>Extensie + Platformă</td><td>XLM-RoBERTa (propriu)</td><td><strong>Da (MLOps auto)</strong></td><td><strong>Da (agregate)</strong></td><td><strong>Da (bilingv)</strong></td><td>Freemium</td><td>—</td></tr>
+  </tbody>
+</table>
+
+<h3>Lacune identificate</h3>
+<ul>
+  <li><strong>Absența detecției la nivel de cuvânt pentru limba română</strong> — nicio soluție existentă nu oferă suport nativ pentru română.</li>
+  <li><strong>Lipsa unui mecanism de feedback continuu</strong> conectat la reantrenarea modelului — toate soluțiile identificate au modele statice.</li>
+  <li><strong>Absența unei platforme de analiză agregată</strong> cu statistici per sursă, perioadă și tehnică detectată, accesibilă publicului sau instituțiilor de presă.</li>
+</ul>
+</div>
+
+<!-- SECTION 4 -->
+<div id="s4" class="section">
+<h1>4. Soluția Propusă</h1>
+
+<h2>4.1 Descrierea aplicației</h2>
+<p>PropagandaLens este un sistem format din trei componente principale: <strong>(1)</strong> o extensie Chrome care permite utilizatorilor să analizeze orice articol vizualizat în browser, <strong>(2)</strong> o infrastructură cloud pe Google Cloud Platform care gestionează inferența modelului, stocarea datelor și procesarea feedback-ului, și <strong>(3)</strong> o platformă web publică ce oferă statistici agregate privind propaganda detectată, reputația surselor și tendințele identificate.</p>
+<p>Extensia extrage textul principal al articolului curent, îl trimite la API-ul cloud și afișează utilizatorului un scor general de propagandă, lista tehnicilor identificate cu evidențierea secvențelor corespunzătoare și scorul de reputație al sursei. Utilizatorii pot oferi feedback direct din extensie, care alimentează pipeline-ul MLOps.</p>
+
+<h2>4.2 Elementul de inovație</h2>
+<div class="callout blue">
+  <strong>Inovație 1 — Model bilingv (română-engleză):</strong> XLM-RoBERTa fine-tuned pe corpus propriu. Nicio soluție existentă nu oferă suport nativ pentru română.
+</div>
+<div class="callout green">
+  <strong>Inovație 2 — Pipeline MLOps complet automatizat:</strong> Feedback-ul utilizatorilor declanșează automat reantrenarea pe Vertex AI Pipelines, cu A/B testing înainte de deployment complet. Modele statice → modele vii.
+</div>
+<div class="callout purple">
+  <strong>Inovație 3 — Sistem de reputație per sursă bazat pe date obiective:</strong> Nu evaluări editoriale manuale, ci agregări BigQuery din mii de analize reale, actualizate zilnic și accesibile gratuit.
+</div>
+
+<h2>4.3 Funcționalități principale</h2>
+<h3>Extensia Chrome</h3>
+<ul>
+  <li>Analiză automată sau la cerere a articolului curent, cu evidențierea vizuală a secvențelor cu propagandă detectată.</li>
+  <li>Afișarea scorului de reputație al sursei și a numărului de articole analizate anterior de pe acel domeniu.</li>
+  <li>Mecanism de feedback inline (analiză incorectă, cu posibilitatea de a eticheta manual tehnica sau secvența detectată).</li>
+  <li>Gestionarea planului de abonament și a limitei zilnice de analize.</li>
+</ul>
+<h3>Platforma web</h3>
+<ul>
+  <li>Dashboard public cu statistici agregate: cele mai frecvente tehnici, evoluție temporală, distribuție per sursă.</li>
+  <li>Pagina de reputație per sursă media, cu scor calculat pe ultimele 30 zile.</li>
+  <li>Export CSV/JSON și acces API programatic pentru utilizatorii cu abonament Premium/Business.</li>
+  <li>Alerte configurabile per sursă pentru utilizatorii cu abonament Premium și Business.</li>
+</ul>
+</div>
+
+<!-- SECTION 5 -->
+<div id="s5" class="section">
+<h1>5. Tehnologii Utilizate și Justificarea Alegerilor</h1>
+
+<h2>5.1 Infrastructura Google Cloud Platform</h2>
+<p>Întreaga infrastructură cloud este construită pe Google Cloud Platform (GCP), ales pentru integrarea nativă dintre serviciile de compute, date și machine learning (Vertex AI), pentru maturitatea serviciilor MLOps și pentru SLA-urile adecvate unui produs comercial.</p>
+
+<table>
+  <thead><tr><th>Serviciu GCP</th><th>Rol în sistem</th><th>Justificarea alegerii față de alternativă</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Cloud Run</strong></td><td>Servicii de inferență, API Gateway, platformă web</td><td>Serverless cu scaling la zero — cost zero în absența traficului. Preferabil față de GKE (overhead operațional) și față de Compute Engine (VM permanent activ).</td></tr>
+    <tr><td><strong>Cloud Pub/Sub</strong></td><td>Comunicare asincronă între microservicii</td><td>Decuplare componente, retry automat, toleranță la vârfuri de trafic. Preferabil față de HTTP direct (cuplare strânsă, fără retry).</td></tr>
+    <tr><td><strong>Cloud Memorystore (Redis)</strong></td><td>Caching rezultate analiză</td><td>Latență sub-milisecundă, TTL nativ per cheie. Preferabil față de Firestore (5–15ms latență, cost mai ridicat per operație).</td></tr>
+    <tr><td><strong>Cloud Firestore</strong></td><td>Stocare rezultate, configurații, scoruri reputație</td><td>Model NoSQL flexibil, reguli de securitate native, real-time listeners pentru extensie.</td></tr>
+    <tr><td><strong>Cloud Firestore</strong></td><td>Notificări real-time la extensie</td><td>Push (nu polling), latență &lt;100ms. Elimină polling-ul din extensie.</td></tr>
+    <tr><td><strong>BigQuery</strong></td><td>Data warehouse analitic, date antrenament ML</td><td>SQL pe sute de milioane de rânduri în secunde, fără indexare manuală. Nu are echivalent self-hosted cost-eficient.</td></tr>
+    <tr><td><strong>Vertex AI Pipelines</strong></td><td>Orchestrare pipeline MLOps</td><td>Integrare nativă cu training și model registry, reproducibilitate. Preferabil față de Cloud Composer (cost fix ridicat) și Cloud Functions (fără vizibilitate end-to-end).</td></tr>
+    <tr><td><strong>Cloud Storage</strong></td><td>Artefacte model ML, date antrenament</td><td>Stocare durabilă, integrare nativă cu Vertex AI, cost scăzut per GB.</td></tr>
+    <tr><td><strong>Cloud Scheduler</strong></td><td>Job-uri periodice (reputație surse)</td><td>Cron managed fără server dedicat, fără cost în perioadele inactive.</td></tr>
+    <tr><td><strong>Cloud Functions</strong></td><td>Procesare evenimente (feedback, reputație, A/B)</td><td>Execuție la eveniment, cost per invocație, latență scăzută la cold start.</td></tr>
+    <tr><td><strong>Cloud Identity Platform</strong></td><td>Autentificare utilizatori</td><td>JWT out-of-the-box, multipli provideri, integrare cu regulile Firestore.</td></tr>
+  </tbody>
+</table>
+
+<h2>5.2 Modelul de machine learning</h2>
+<p>Modelul de bază este un clasificator multi-label fine-tuned pe arhitectura <strong>XLM-RoBERTa</strong>, un model transformer preantrenat pe 100 de limbi, incluzând română și engleză. Fine-tuning-ul a fost realizat pe setul de date <strong>SemEval-2020 Task 11</strong> (Fragment-Level Propaganda Detection), augmentat cu un corpus propriu de articole în limba română. Modelul identifică secvențe din textul de intrare care pot conține propagandă și produce, pentru fiecare, câte un vector de probabilități pentru cele 14 tehnici de propagandă definite în taxonomia SemEval.</p>
+
+<p>Din punct de vedere arhitectural, sistemul este proiectat să suporte diferențierea între niveluri de serviciu prin variante distincte de model:</p>
+<ul>
+  <li><strong>Free tier:</strong> DistilXLM-RoBERTa — model distilat, latență redusă, cost computațional mai scăzut.</li>
+  <li><strong>Premium tier:</strong> XLM-RoBERTa-base — echilibru performanță/latență.</li>
+  <li><strong>Business tier:</strong> XLM-RoBERTa-large — performanță maximă, cost computațional mai ridicat.</li>
+</ul>
+
+<!-- <div class="callout">
+  <strong>Notă de implementare:</strong> Diferențierea prin trei modele distincte reprezintă arhitectura țintă a sistemului. În implementarea curentă, diferențierea între niveluri este realizată la nivelul API Gateway prin controlul lungimii inputului și al granularității răspunsului, utilizând un singur model (XLM-RoBERTa-base). Această decizie reduce costurile de compute și complexitatea pipeline-ului de reantrenare, urmând să fie revizuită pe măsura creșterii bazei de utilizatori.
+</div> -->
+
+<h2>5.3 Extensia Chrome și platforma web</h2>
+<p>Extensia este dezvoltată conform <strong>Manifest V3</strong>, standardul actual care impune restricții suplimentare de securitate (service workers, declarative content scripts). Interfața utilizator este implementată ca popup React, iar comunicarea cu API-ul cloud este realizată prin <code>fetch()</code> cu autentificare Cloud Identity Platform JWT.</p>
+<p>Platforma web este o aplicație <strong>Next.js</strong> deployată pe Cloud Run. Alegerea Next.js față de o SPA simplă permite server-side rendering pentru paginile publice (importante pentru indexarea SEO a datelor de reputație), menținând interactivitate completă pe dashboard-uri.</p>
+</div>
+
+<!-- SECTION 6 -->
+<div id="s6" class="section">
+<h1>6. Arhitectura Sistemului</h1>
+
+<h2 id="s6_1">6.1 Prezentare generală</h2>
+<p>Sistemul PropagandaLens urmează o arhitectură cloud-native bazată pe microservicii, cu comunicare predominant asincronă prin Cloud Pub/Sub. Fiecare componentă are o responsabilitate unică și poate fi scalată independent.</p>
+
+<p>Fluxul principal al unei cereri de analiză parcurge următoarele etape:</p>
+<ol>
+  <li>Extensia Chrome trimite textul articolului la <strong>Cloud Run API Gateway</strong>.</li>
+  <li>API Gateway verifică cache-ul distribuit <strong>Cloud Memorystore</strong> (hash SHA-256 al textului).</li>
+  <li>La <em>cache miss</em>, cererea este publicată în <strong>Cloud Pub/Sub</strong> (topic: <em>inference-requests</em>).</li>
+  <li>Serviciul de inferență corespunzător tier-ului procesează cererea și publică rezultatul (topic: <em>inference-results</em>).</li>
+  <li>O <strong>Cloud Function</strong> scrie rezultatul în Firestore, loghează metadatele în BigQuery și notifică extensia prin <strong>Firestore</strong> (real-time listeners).</li>
+</ol>
+
+<h2 id="s6_2">6.2 Componente și responsabilități</h2>
+
+<h3>6.2.1 API Gateway (Cloud Run)</h3>
+<p>Serviciul de intrare al sistemului, responsabil pentru validarea token-ului Cloud Identity Platform JWT, rate limiting per utilizator conform planului de abonament, verificarea cache-ului în Memorystore și rutarea cererilor. <em>Motivul plasării pe Cloud Run:</em> scaling la zero — cost zero în absența traficului, aspect critic pentru un produs în faza de lansare cu trafic variabil și imprevizibil.</p>
+
+<h3>6.2.2 Cloud Pub/Sub — Topic-uri principale</h3>
+<p>Sistemul utilizează patru topic-uri Pub/Sub: <strong>(1)</strong> <em>inference-requests</em> — cereri noi de analiză; <strong>(2)</strong> <em>inference-results</em> — distribuirea rezultatelor; <strong>(3)</strong> <em>feedback-events</em> — feedback utilizatori; <strong>(4)</strong> <em>reputation-updates</em> — declanșarea recalculării scorurilor. <em>Motivul utilizării Pub/Sub:</em> decuplarea componentelor permite scalare independentă, retry automat la eșec și gestionarea vârfurilor de trafic fără supraîncărcarea serviciilor downstream.</p>
+
+<h3>6.2.3 Servicii de inferență (Cloud Run)</h3>
+<p>Arhitectura prevede trei instanțe ale serviciului de inferență, corespunzând celor trei niveluri de serviciu: <strong>Free</strong> (DistilXLM-RoBERTa), <strong>Premium</strong> (XLM-RoBERTa-base) și <strong>Business</strong> (XLM-RoBERTa-large). Fiecare consumă dintr-un subscription Pub/Sub dedicat, permițând scalare și configurare independentă.</p>
+<div class="callout">
+  <strong>Notă de implementare:</strong> În implementarea curentă, diferențierea între niveluri se realizează printr-o singură instanță de model (XLM-RoBERTa-base)<!--, cu controlul lungimii inputului și al granularității răspunsului efectuat la nivelul API Gateway-->. Separarea în instanțe distincte este planificată ca etapă ulterioară, condiționată de creșterea traficului real.
+</div>
+<p><em>Motivul plasării pe cloud:</em> modelele NLP au amprente de memorie semnificative (1–6 GB); Cloud Run gestionează elastic acest lucru fără VM-uri permanent active.</p>
+
+<h3>6.2.4 Cloud Memorystore (Redis) — Caching distribuit</h3>
+<p>Cache-ul stochează rezultatele analizelor, indexate după <strong>hash-ul SHA-256 al conținutului textual</strong> (nu al URL-ului, pentru a gestiona corect modificările articolelor). TTL implicit: 72 de ore. La deployment-ul unui model nou, cache-ul este invalidat selectiv prin publicarea unui eveniment pe un canal Redis dedicat.</p>
+<div class="callout">
+  <strong>Decizie de design importantă:</strong> Hashing-ul conținutului, nu al URL-ului, rezolvă problema articolelor actualizate după publicare — un articol modificat va genera un cache miss și va fi reanalizat cu modelul curent.
+</div>
+
+<h3>6.2.5 Firestore — Stocare rezultate și configurații</h3>
+<p>Firestore stochează: rezultatele complete ale analizelor (scoruri, tehnici detectate, metadate — fără textul original al articolului), configurațiile utilizatorilor și planurile de abonament, datele de feedback și scorurile de reputație per sursă (cache de 24h al agregărilor BigQuery). Regulile de securitate Firestore garantează că un utilizator poate accesa exclusiv propriile date.</p>
+
+<h3>6.2.6 BigQuery — Analytics și date agregate</h3>
+<p>Toate analizele efectuate sunt logate în BigQuery în timp real. Datele stocate sunt exclusiv de natură analitică: scoruri de propagandă, tehnici detectate, metadate temporale, identificatorul hash al conținutului și domeniul sursei. Textul original al articolului nu este stocat în BigQuery. BigQuery este interogat de: (1) platforma web pentru statistici publice, (2) pipeline-ul MLOps pentru construirea setului de date de antrenament pe baza feedback-ului, (3) Cloud Scheduler pentru recalcularea scorurilor de reputație. <em>Motivul plasării pe cloud:</em> capacitatea BigQuery de a executa agregări SQL pe sute de milioane de rânduri în secunde nu are echivalent self-hosted cost-eficient.</p>
+
+<h3>6.2.7 Vertex AI Pipelines — Pipeline MLOps</h3>
+<p>Pipeline-ul MLOps este orchestrat prin Vertex AI Pipelines (Kubeflow-based) și cuprinde cinci etape: <strong>(1)</strong> extragerea datelor de antrenament din BigQuery; <strong>(2)</strong> preprocesarea și augmentarea datelor; <strong>(3)</strong> fine-tuning-ul modelului pe Vertex AI Training; <strong>(4)</strong> evaluarea automată comparativă față de modelul curent; <strong>(5)</strong> deployment-ul condiționat cu traffic split 10%/90% pentru A/B testing.</p>
+<p>Pipeline-ul este declanșat automat de un Cloud Function când volumul de feedback nou depășește un prag configurabil (implicit: 100 de exemple validate), sau atunci când o parte din feedback se apropie de durata maximă pentru stocare de 72 ore. Textele articolelor utilizate în antrenament sunt procesate temporar în cadrul pipeline-ului și nu sunt persistate după finalizarea antrenamentului, conform cadrului juridic detaliat în Secțiunea 10.</p>
+
+<h3>6.2.8 A/B Testing (Cloud Run Traffic Splitting)</h3>
+<p>Cloud Run permite distribuirea traficului între mai multe revizii ale aceluiași serviciu. La deployment-ul unui model nou, acesta primește inițial <strong>10% din traficul de inferență</strong>, restul de 90% rămânând pe versiunea curentă. Rezultatele ambelor versiuni sunt logate în BigQuery cu tag-ul versiunii. Un Cloud Function evaluează după un timp metricile comparative (acuratețe medie, rată de feedback negativ, latență) și promovează automat modelul nou sau inițiază rollback.</p>
+
+<h3>6.2.9 Cloud Scheduler + Cloud Functions — Sistem de reputație</h3>
+<p>Un job Cloud Scheduler declanșează săptămânal (duminică la 03:00 UTC) o Cloud Function care execută o interogare agregată BigQuery pentru recalcularea scorurilor de reputație ale surselor cu minimum 10 analize în ultimele 30 de zile. Scorul de reputație este o medie ponderată a proporției articolelor cu scor de propagandă ridicat, ponderată cu numărul de utilizatori unici. Rezultatele sunt scrise în Firestore, de unde sunt servite extensiei și platformei web.</p>
+
+<h2 id="s6_3">6.3 Alternativele analizate pentru componente-cheie</h2>
+
+<table>
+  <thead><tr><th>Componentă</th><th>Opțiunea aleasă</th><th>Alternativa 1</th><th>Alternativa 2</th><th>Motivul alegerii</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Serviciu inferență</strong></td>
+      <td>Cloud Run</td>
+      <td>Vertex AI Prediction</td>
+      <td>GKE</td>
+      <td>Scaling la zero, deployment simplu, fără cost în absența traficului. Vertex AI are cost minim per endpoint activ; GKE are overhead operațional ridicat.</td>
+    </tr>
+    <tr>
+      <td><strong>Cache distribuită</strong></td>
+      <td>Cloud Memorystore (Redis)</td>
+      <td>Firestore cu TTL</td>
+      <td>Cloud CDN</td>
+      <td>Latență sub-milisecundă și invalidare distribuită prin Redis Pub/Sub. Firestore are 5–15ms latență; Cloud CDN nu suportă invalidare selectivă la deploy model.</td>
+    </tr>
+    <tr>
+      <td><strong>Pipeline MLOps</strong></td>
+      <td>Vertex AI Pipelines</td>
+      <td>Cloud Composer (Airflow)</td>
+      <td>Cloud Functions înlănțuite</td>
+      <td>Orchestrare vizuală, integrare nativă cu Vertex AI Training și Model Registry, reproducibilitate garantată. Composer: cost fix ~300 EUR/lună; Functions: fără vizibilitate end-to-end.</td>
+    </tr>
+    <tr>
+      <td><strong>Analytics</strong></td>
+      <td>BigQuery</td>
+      <td>PostgreSQL pe Cloud SQL</td>
+      <td>Cloud Bigtable</td>
+      <td>SQL pe volume masive fără indexare manuală. Cloud SQL necesită indexare și optimizare la scale; Bigtable e excesiv pentru query-uri ad-hoc SQL.</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<!-- SECTION 7 -->
+<div id="s7" class="section">
+<h1>7. Specificații API (OpenAPI 3.0)</h1>
+
+<p>API-ul PropagandaLens respectă specificația <strong>OpenAPI 3.0</strong>. API-ul este versionat (<code>/v1/</code>), utilizează autentificare Bearer Token (Cloud Identity Platform JWT) și returnează răspunsuri JSON.<!-- Cerințele SLA sunt definite per tier: Free (p95 &lt; 2000ms), Premium (p95 &lt; 800ms), Business (p95 &lt; 400ms).--> Toate endpoint-urile sunt expuse prin Cloud Run API Gateway, cu rate limiting configurat per UID și plan de abonament.</p>
+
+<h2>7.1 Endpoint-uri principale</h2>
+
+<table>
+  <thead><tr><th>Metodă + Path</th><th>Auth</th><th>Descriere</th><th>Răspuns principal</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><span class="method post">POST</span><code>/v1/analyze</code></td>
+      <td>Bearer JWT</td>
+      <td>Trimite articol pentru analiză. Sincron la cache hit, asincron altfel.</td>
+      <td><code>{ jobId, status, result? }</code></td>
+    </tr>
+    <tr>
+      <td><span class="method get">GET</span><code>/v1/analyze/{jobId}</code></td>
+      <td>Bearer JWT</td>
+      <td>Returnează rezultatul unei analize asincrone.</td>
+      <td><code>{ status, modelVersion, result: { spans } }</code></td>
+    </tr>
+    <tr>
+      <td><span class="method post">POST</span><code>/v1/feedback</code></td>
+      <td>Bearer JWT</td>
+      <td>Înregistrează feedback pentru o analiză existentă.</td>
+      <td><code>{ feedbackId, accepted }</code></td>
+    </tr>
+    <tr>
+      <td><span class="method get">GET</span><code>/v1/sources/{domain}</code></td>
+      <td>Opțional</td>
+      <td>Scorul de reputație și statisticile agregate pentru un domeniu.</td>
+      <td><code>{ domain, reputationScore, topTechniques[] }</code></td>
+    </tr>
+    <tr>
+      <td><span class="method get">GET</span><code>/v1/analytics/trends</code></td>
+      <td>Bearer JWT (Premium+)</td>
+      <td>Tendințele de propagandă pe o perioadă specificată.</td>
+      <td><code>{ techniques[] }</code></td>
+    </tr>
+    <tr>
+      <td><span class="method get">GET</span><code>/v1/analytics/export</code></td>
+      <td>Bearer JWT (Premium+)</td>
+      <td>Export date CSV / JSON al analizelor.</td>
+      <td>JSON array sau CSV stream</td>
+    </tr>
+    <tr>
+      <td><span class="method get">GET</span><code>/v1/user/me</code></td>
+      <td>Bearer JWT</td>
+      <td>Profilul utilizatorului și utilizarea planului curent.</td>
+      <td><code>{ uid, tier, dailyUsed, dailyLimit }</code></td>
+    </tr>
+    <tr>
+      <td><span class="method post">POST</span><code>/v1/auth/token</code></td>
+      <td>Cloud Identity Platform credential</td>
+      <td>Schimbă credential Cloud Identity Platform cu JWT PropagandaLens.</td>
+      <td><code>{ token, expiresIn, tier }</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>7.2 Fluxul de analiză a unui articol (cache miss)</h2>
+<ol>
+  <li>Extensia Chrome extrage textul articolului și apelează <code>POST /v1/analyze</code> cu <code>{ text, url, language }</code>.</li>
+  <li>API Gateway validează token-ul JWT, verifică limita zilnică și calculează hash-ul SHA-256 al textului.</li>
+  <li>La cache miss în Memorystore, publică mesaj în Pub/Sub <em>inference-requests</em> cu <code>{ jobId, text, tier, hash }</code> și returnează <code>{ jobId, status: "processing" }</code>.</li>
+  <li>Serviciul de inferență corespunzător tier-ului consumă mesajul, rulează modelul și publică rezultatul în <em>inference-results</em>.</li>
+  <li>Cloud Function scrie metadatele și scorurile în Firestore, loghează în BigQuery și actualizează Firestore. Textul articolului nu este persistat.</li>
+  <li>Extensia, subscrisă prin Firestore real-time listener, primește rezultatul și actualizează UI-ul.</li>
+</ol>
+
+<h2>7.3 Fluxul de feedback și reantrenare</h2>
+<p>Utilizatorul apasă butonul de feedback în extensie, după ce a acceptat explicit termenii de procesare a conținutului (detaliate în Secțiunea 10). Extensia apelează <code>POST /v1/feedback</code>. Feedback-ul este scris în BigQuery și publicat în <em>feedback-events</em>. Cloud Function-ul acumulator monitorizează contorul; la N >= 100 exemple validate sau după cel mult 72 ore, publică un eveniment <em>mlops-trigger</em>, care declanșează Vertex AI Pipelines. Textul articolului asociat feedback-ului este utilizat exclusiv în cadrul pipeline-ului de antrenament și nu este stocat permanent — ciclul de viață al datelor este detaliat în Secțiunea 10. La finalizarea antrenamentului, noul model este deploat cu traffic split 10%/90%. Cloud Function-ul A/B Evaluator monitorizează zilnic metricile și promovează sau face rollback.</p>
+
+<h2>7.4 Schema principală — AnalysisResult</h2>
+<div class="endpoint">
+<pre>{
+  "modelVersion": "v2.3.1",
+  "spans": [
+    {
+      "spanId": "s_001",
+      "span": {"start": 0, "end": 26},
+      "detectedTechniques": [
+        { "technique": "APPEAL_TO_FEAR", "score": 0.91 },
+        { "technique": "BLACK_AND_WHITE_FALLACY", "score": 0.73 }
+      ]
+    }
+  ],
+  "sourceReputation": {
+    "domain": "example.ro",
+    "reputationScore": 0.65,
+    "analyzedCount": 142,
+    "lastUpdated": "2026-05-18T18:43:30.110Z"
+    },
+  "processingTimeMs": 400
+}</pre>
+</div>
+</div>
+
+<!-- SECTION 8 -->
+<div id="s8" class="section">
+<h1>8. Analiza Business</h1>
+
+<h2 id="s8_1">8.1 Business Model Canvas</h2>
+<p>Structura de mai jos prezintă Business Model Canvas al PropagandaLens, conform metodologiei Osterwalder &amp; Pigneur (2010).</p>
+
+<table class="bmc-table">
+  <colgroup>
+    <col style="width:20%"><col style="width:20%"><col style="width:20%">
+    <col style="width:20%"><col style="width:20%">
+  </colgroup>
+  <tbody>
+    <tr>
+      <td rowspan="2">
+        <span class="bmc-label">Parteneri Cheie</span>
+        <ul>
+          <li>Google Cloud</li>
+          <li>Redacții partenere (date antrenament)</li>
+          <li>Instituții academice</li>
+          <li>Organizații fact-checking</li>
+        </ul>
+      </td>
+      <td>
+        <span class="bmc-label">Activități Cheie</span>
+        <ul>
+          <li>Mentenanță model ML</li>
+          <li>Gestiune infrastructură GCP</li>
+          <li>Suport clienți business</li>
+          <li>Colectare și validare feedback</li>
+        </ul>
+      </td>
+      <td rowspan="2" class="bmc-cell-value">
+        <span class="bmc-label">Propunere de Valoare</span>
+        <ul>
+          <li><strong>Detecție la nivel de cuvânt</strong></li>
+          <li><strong>Model bilingv RO + EN</strong></li>
+          <li>Feedback loop continuu (modele vii)</li>
+          <li>Reputație sursă bazată pe date reale</li>
+          <li>Acces API programatic</li>
+          <li>Statistici publice gratuite</li>
+        </ul>
+      </td>
+      <td>
+        <span class="bmc-label">Relații Clienți</span>
+        <ul>
+          <li>Self-service (Free/Premium)</li>
+          <li>Account management (Business)</li>
+          <li>Documentație API</li>
+          <li>Suport email</li>
+        </ul>
+      </td>
+      <td rowspan="2">
+        <span class="bmc-label">Segmente Clienți</span>
+        <ul>
+          <li>Utilizatori individuali (B2C)</li>
+          <li>Jurnaliști, fact-checkeri</li>
+          <li>Instituții de presă (B2B)</li>
+          <li>ONG-uri media literacy</li>
+          <li>Agenții guvernamentale</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <span class="bmc-label">Resurse Cheie</span>
+        <ul>
+          <li>Modelul ML propriu (bilingv)</li>
+          <li>Infrastructura GCP</li>
+          <li>Baza de date feedback</li>
+          <li>Echipa ML și DevOps</li>
+        </ul>
+      </td>
+      <td>
+        <span class="bmc-label">Canale</span>
+        <ul>
+          <li>Chrome Web Store</li>
+          <li>Site propriu</li>
+          <li>Parteneriate redacții</li>
+          <li>Product Hunt</li>
+          <li>Conferințe media</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2" class="bmc-cell-costs">
+        <span class="bmc-label">Structura Costurilor</span>
+        <ul>
+          <li>Compute GCP (Cloud Run, Vertex AI): ~120 EUR/lună</li>
+          <li>Stocare (Firestore, BigQuery, GCS): ~40 EUR/lună</li>
+          <li>Cloud Identity Platform: ~10 EUR/lună</li>
+          <li>Salarii echipă; marketing și distribuție</li>
+        </ul>
+      </td>
+      <td colspan="3" class="bmc-cell-revenue">
+        <span class="bmc-label">Surse de Venit</span>
+        <ul>
+          <li>Abonamente lunare (Free / 4,99 EUR / 49,99 EUR)</li>
+          <li>Rapoarte personalizate pentru instituții</li>
+          <li>Granturi europene (Horizon Europe, CEF Media)</li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="s8_2">8.2 Segmente de clienți</h2>
+<p><strong>Segmentul primar B2C</strong> este format din utilizatori individuali preocupați de calitatea informațiilor pe care le consumă: studenți, profesioniști, activiști civici. Aceștia accesează serviciul prin extensia Chrome, în principal prin nivelurile Free și Premium. Durerea rezolvată: incapacitatea de a identifica tehnici subtile de manipulare în articolele citite zilnic.</p>
+<p><strong>Segmentul secundar B2B</strong> include instituții de presă, redacții de fact-checking și ONG-uri de media literacy, care au nevoie de acces API programatic, volume mai mari de analize și date exportabile pentru rapoartele proprii. Durerea rezolvată: absența unui instrument automat de monitorizare a calității jurnalistice și a activității propagandistice per sursă.</p>
+<p><strong>Segmentul terțiar</strong>, cu ciclu de vânzare mai lung, îl reprezintă agențiile guvernamentale și structurile europene implicate în monitorizarea dezinformării (SEAE, departamente de comunicare strategică din ministere). Potențial de contracte de valoare ridicată prin licitații publice.</p>
+
+<h2 id="s8_3">8.3 Model de prețuri</h2>
+<div class="pricing-grid">
+  <div class="pricing-card">
+    <h3>Free</h3>
+    <div class="price">0 EUR</div>
+    <div class="price-note">pentru totdeauna</div>
+    <ul class="feature-list">
+      <li>5 analize / zi</li>
+      <li>Model DistilXLM-RoBERTa</li>
+      <li>Statistici publice platformă</li>
+      <li>Reputație surse (public)</li>
+      <li class="no">Acces API</li>
+      <li class="no">Istoric analize</li>
+      <li class="no">Alerte per sursă</li>
+    </ul>
+  </div>
+  <div class="pricing-card premium">
+    <h3>Premium</h3>
+    <div class="price">4,99 EUR</div>
+    <div class="price-note">per lună</div>
+    <ul class="feature-list">
+      <li>Oferta gratis, plus:</li>
+      <li>20 analize / zi</li>
+      <li>Model XLM-RoBERTa-base</li>
+      <li>Dashboard analitic avansat</li>
+      <li>Istoric analize (personal)</li>
+      <li>Alerte configurabile per sursă</li>
+      <li class="no">Acces API programatic</li>
+    </ul>
+  </div>
+  <div class="pricing-card business">
+    <h3>Business</h3>
+    <div class="price business-price">49,99 EUR</div>
+    <div class="price-note">per lună</div>
+    <ul class="feature-list">
+      <li>Oferta premium, plus:</li>
+      <li>Analize nelimitate</li>
+      <li>Model XLM-RoBERTa-large</li>
+      <li>Analiză bulk prin API</li>
+      <li>Istoric analize (global, anonimizat)</li>
+    </ul>
+  </div>
+</div>
+
+<h2 id="s8_4">8.4 Canale de distribuție și strategia de promovare</h2>
+<p>Canalul principal de distribuție este <strong>Chrome Web Store</strong>, unde listing-ul organic asigură descoperirea de către utilizatori care caută instrumente de fact-checking sau detecție a dezinformării. Calitatea recenziilor și numărul de utilizatori activi sunt factori critici de ranking și vor fi prioritizați în faza de lansare prin campanii de onboarding.</p>
+<p>Strategia de <strong>content marketing</strong> vizează publicarea de analize periodice bazate pe datele platformei (de exemplu: „Cele mai frecvente tehnici de propagandă în presa românească în luna X"), distribuite pe LinkedIn și Twitter/X. Parteneriatele cu redacții independente, care beneficiază de acces gratuit Business în schimbul vizibilității, servesc simultan ca canal de distribuție și ca sursă de date de antrenament de înaltă calitate.</p>
+<p>Lansarea pe <strong>Product Hunt</strong> și participarea la conferințe internaționale de fact-checking (<em>Global Fact</em>, <em>EuroFact</em>) asigură vizibilitate în segmentul B2B. Accesul la <strong>granturi europene</strong> (Horizon Europe, CEF Media) constituie atât o sursă de finanțare, cât și o formă de validare instituțională.</p>
+
+<h2 id="s8_5">8.5 Structura costurilor și sustenabilitate</h2>
+<p>Costurile operaționale principale sunt dominate de consumul de compute pe GCP. La o bază de 1.000 de utilizatori activi zilnic (80% Free, 15% Premium, 5% Business), costul lunar estimat GCP este de aproximativ <strong>150–200 EUR</strong>, acoperit de veniturile din abonamente (estimat 750–1.000 EUR/lună). Pragul de rentabilitate este estimat la 300–400 utilizatori plătiți, accesibil în primele 6–12 luni post-lansare.</p>
+<table>
+  <thead><tr><th>Serviciu</th><th>Cost estimat / lună (1K utilizatori activi)</th></tr></thead>
+  <tbody>
+    <tr><td>Cloud Run (inferență + API + platformă web)</td><td>70–90 EUR</td></tr>
+    <tr><td>Vertex AI (reantrenare periodică ~2x/lună)</td><td>30–50 EUR</td></tr>
+    <tr><td>BigQuery (stocare + query-uri)</td><td>15–25 EUR</td></tr>
+    <tr><td>Firestore</td><td>10–15 EUR</td></tr>
+    <tr><td>Cloud Memorystore (Redis, instanță M1 Basic)</td><td>30–35 EUR</td></tr>
+    <tr><td>Cloud Identity Platform</td><td>10–20 EUR</td></tr>
+    <tr><td><strong>Total GCP estimat</strong></td><td><strong>165–235 EUR / lună</strong></td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- SECTION 9 -->
+<div id="s9" class="section">
+<h1>9. Concluzii și Direcții Viitoare</h1>
+<p>PropagandaLens adresează o problemă reală, documentată și cu impact social direct, printr-o soluție tehnică solidă ancorată în paradigmele cloud computing contemporane. Arhitectura event-driven pe GCP, pipeline-ul MLOps automat, sistemul de A/B testing al modelelor, caching-ul distribuit cu invalidare selectivă și sistemul de reputație per sursă reprezintă contribuții tehnice concrete, justificate prin avantaje măsurabile de performanță, cost și scalabilitate, nu adăugate de dragul complexității.</p>
+
+<p><strong>Principalele limitări</strong> ale soluției actuale includ: dependența de calitatea și volumul feedback-ului colectat pentru îmbunătățirea modelului (<em>bootstrapping problem</em>), dificultatea detectării propagandei sofisticate care operează prin omisiune sau context, și necesitatea unui cadru juridic explicit pentru procesarea temporară a textelor jurnalistice — cadru definit în Secțiunea 10 și reflectat în termenii și condițiile platformei.</p>
+
+<p><strong>Direcții de dezvoltare viitoare</strong> includ: diferențierea arhitecturală completă pe trei variante de model (DistilXLM-RoBERTa / XLM-RoBERTa-base / large) pe măsura creșterii traficului real, extinderea suportului lingvistic la alte limbi europene (bulgară, maghiară, slovacă), integrarea analizei multimodale (imagini + text), dezvoltarea unui API de conformitate DSA destinat platformelor obligate prin regulament să monitorizeze dezinformarea, și explorarea tehnicilor de federated learning pentru reducerea suplimentară a transferului de date textuale către serverele proprii.</p>
+</div>
+
+<!-- SECTION 10 -->
+<div id="s10" class="section">
+<h1>10. Aspecte Juridice: Drepturi de Autor și Termeni de Utilizare</h1>
+
+<h2 id="s10_1">10.1 Cadrul legal aplicabil</h2>
+<p>Procesarea textelor jurnalistice în scopul antrenării modelelor de machine learning se află la intersecția a două corpuri legislative europene: dreptul de autor tradițional și reglementările specifice privind text mining-ul, introduse prin <strong>Directiva (UE) 2019/790 privind dreptul de autor și drepturile conexe pe piața unică digitală</strong>.</p>
+
+<p>Articolul 4 al Directivei 2019/790 permite activitățile de text și data mining în orice scop, inclusiv comercial, cu condiția ca accesul la conținut să fie legal. Excepția se aplică automat dacă titularul drepturilor nu și-a rezervat explicit dreptul de a exclude această utilizare (mecanism de opt-out), prin mijloace specifice cum ar fi o mențiune în termenii și condițiile site-ului sau în fișierul <code>robots.txt</code>. Spre deosebire de articolul 3, care se aplică exclusiv cercetării cu caracter non-comercial, articolul 4 acoperă și utilizările comerciale.</p>
+
+<div class="callout blue">
+  <strong>Situația reglementară actuală:</strong> Nu există, la data redactării acestui document, nicio decizie judecătorească europeană care să fi sancționat procesarea temporară a textelor jurnalistice pentru antrenament ML, în absența stocării permanente a conținutului protejat. Cazurile internaționale pendinte (NYT v. OpenAI în SUA, plângeri similare în Germania și Franța) vizează exclusiv companiile care au construit corpusuri masive de date stocate din conținut scrapat, nu procesarea tranzitorie în contextul feedback-ului utilizatorilor.
+</div>
+
+<p>PropagandaLens adoptă o abordare conservatoare, ancorată în consimțământul explicit al utilizatorului, care reduce semnificativ expunerea juridică față de scenariile de scraping pasiv și stocare permanentă documentate în litigiile internaționale.</p>
+
+<h2 id="s10_2">10.2 Mecanismul de feedback și procesarea temporară a conținutului</h2>
+<p>Arhitectura platformei face distincția clară între două tipuri de procesare a conținutului textual:</p>
+
+<p><strong>Procesarea pentru inferență</strong> (toate nivelurile de abonament): Textul articolului este transmis de extensia Chrome la API Gateway, procesat de modelul de inferență și eliminat. Nu este stocat în nicio bază de date — nici în Firestore, nici în BigQuery. Singurul artefact persistent este hash-ul SHA-256 al conținutului, utilizat drept cheie de cache, și metadatele analizei (scoruri, tehnici detectate, domeniu sursă). Această procesare este asimilabilă funcționării unui motor de căutare care indexează o pagină accesată public, fiind larg acceptată ca legală în lipsa unui opt-out explicit al publicației.</p>
+
+<p><strong>Procesarea pentru antrenament</strong> (condiționată de feedback explicit): Când un utilizator marchează o analiză ca incorectă și trimite feedback, textul articolului asociat este utilizat temporar în pipeline-ul Vertex AI Pipelines pentru reantrenarea modelului. Ciclul de viață al acestui text este delimitat strict: datele de antrenament sunt reținute în Cloud Storage pe durata rulării pipeline-ului (maxim 72 de ore) și șterse automat la finalizarea antrenamentului. La finalul procesului, în sistemele permanente rămân exclusiv metadatele feedback-ului (identificatorul analizei, eticheta corectă, timestamp) — nu textul articolului.</p>
+
+<div class="callout green">
+  <strong>Precedente din industrie:</strong> Abordarea adoptată de PropagandaLens este consecventă cu practica stabilită de mai mulți furnizori de servicii software. LanguageTool și Grammarly utilizează textele transmise de utilizatori pentru îmbunătățirea modelelor de procesare lingvistică, cu consimțământ explicit și fără stocare permanentă a textului integral. Microsoft Copilot și serviciile Azure Cognitive Services procesează temporar datele utilizatorilor pentru fine-tuning, cu clauze contractuale explicite privind durata de retenție și ștergerea ulterioară. Aceste practici au operat fără contestații juridice de succes în jurisdicțiile europene, tocmai datorită caracterului tranzitoriu al procesării și al consimțământului explicit obținut.
+</div>
+
+<h2 id="s10_3">10.3 Clauze obligatorii în Termenii și Condițiile platformei</h2>
+<p>Termenii și Condițiile PropagandaLens trebuie să conțină, în mod obligatoriu și în formă clară — nu îngropate în texte tehnico-juridice dense — următoarele prevederi:</p>
+
+<h3>Clauza 1 — Licența de procesare</h3>
+<p>Prin utilizarea serviciului, utilizatorul acordă PropagandaLens o licență neexclusivă, gratuită, revocabilă, limitată exclusiv la scopurile descrise în prezenții termeni, de a procesa conținutul textual transmis prin extensie în vederea furnizării serviciului de analiză și, în cazul în care utilizatorul transmite feedback explicit, în vederea îmbunătățirii modelelor proprii. Licența nu conferă PropagandaLens dreptul de a stoca, reproduce, distribui sau publica conținutul textual transmis.</p>
+
+<h3>Clauza 2 — Durata de retenție a conținutului</h3>
+<p>Textul integral al articolelor transmise pentru analiză nu este stocat permanent în niciun sistem al PropagandaLens. La cache miss, textul este procesat în memoria serviciului de inferență și eliminat la finalizarea analizei. În cazul în care utilizatorul transmite feedback, textul articolului asociat poate fi reținut temporar în spațiu de stocare securizat exclusiv pe durata procesului de reantrenare a modelului, care nu depășește <strong>72 de ore</strong> de la transmiterea feedback-ului. La expirarea acestui termen, datele textuale brute sunt șterse automat și irevocabil. PropagandaLens nu stochează permanent și nu reproduce conținut jurnalistic.</p>
+
+<h3>Clauza 3 — Declarația utilizatorului privind accesul legal</h3>
+<p>Prin transmiterea conținutului pentru analiză, utilizatorul declară că a accesat articolul respectiv în mod legal, prin mijloace normale de navigare web, și că transmiterea sa nu încalcă nicio restricție impusă de titularul drepturilor. PropagandaLens nu verifică și nu poate verifica proveniența conținutului transmis; responsabilitatea pentru transmiterea de conținut la care utilizatorul nu are acces legal revine în întregime utilizatorului.</p>
+
+<h3>Clauza 4 — Consimțământul pentru antrenament (distinct și explicit)</h3>
+<p>Participarea la mecanismul de feedback și la reantrenarea modelului este voluntară și separată de utilizarea de bază a serviciului. Anterior primei transmisii de feedback, utilizatorului i se prezintă un dialog de confirmare distinct, care descrie în termeni simpli: ce date sunt procesate (textul articolului analizat și eticheta de feedback), în ce scop (îmbunătățirea modelului de detecție), pe ce durată (maxim 72 de ore) și cu ce efect (datele brute sunt șterse la finalizare, eticheta de feedback anonimizată este reținută). Consimțământul poate fi retras oricând din setările contului, cu efect pentru feedback-ul ulterior.</p>
+
+<h3>Clauza 5 — Excepție pentru conținut fără restricții de copyright</h3>
+<p>Pentru articolele publicate sub licențe care permit explicit reutilizarea (Creative Commons, domeniu public, licențe open content), PropagandaLens poate, cu acordul separat al utilizatorului, să rețină textul integral în scopuri de construire a corpus-ului de antrenament. Această opțiune este dezactivată implicit și se activează exclusiv prin consimțământ explicit, granular, al utilizatorului pentru fiecare sursă în parte.</p>
+
+<div class="callout red">
+  <strong>Implementare în interfață:</strong> Clauzele 2 și 4 nu sunt suficiente dacă sunt prezente exclusiv în documentul de termeni și condiții. GDPR impune ca informarea privind procesarea datelor să fie furnizată în momentul colectării, în formă inteligibilă. Implementarea corectă presupune: un banner informativ la prima utilizare a extensiei (Clauza 2), un dialog de confirmare explicit la primul feedback transmis (Clauza 4) și accesul facil la setarea de revocare a consimțământului din interfața extensiei și a platformei web.
+</div>
+</div>
+
+<!-- REFERENCES -->
+<div id="refs" class="section">
+<h1>Referințe</h1>
+<ol style="font-size:10pt">
+  <li>A. Osterwalder, Y. Pigneur, <em>Business Model Generation</em>, Wiley, 2010.</li>
+  <li>G. Da San Martino et al., „SemEval-2020 Task 11: Detection of Propaganda Techniques in News Articles", <em>Proceedings of SemEval-2020</em>, 2020.</li>
+  <li>A. Conneau et al., „Unsupervised Cross-lingual Representation Learning at Scale", <em>ACL 2020</em>.</li>
+  <li>European External Action Service, <em>EUvsDisinfo Database</em>, https://euvsdisinfo.eu, accesat 2025.</li>
+  <li>Reuters Institute for the Study of Journalism, <em>Digital News Report 2024</em>, Universitatea Oxford, 2024.</li>
+  <li>Freedom House, <em>Freedom on the Net 2024</em>, 2024.</li>
+  <li>Consiliul Suprem de Apărare al Țării (CSAT), <em>Raport privind influența digitală în alegerile din 2024</em>, desecretizat parțial, decembrie 2024.</li>
+  <li>Regulamentul (UE) 2022/2065 al Parlamentului European și al Consiliului din 19 octombrie 2022 privind o piață unică pentru serviciile digitale (Digital Services Act).</li>
+  <li>Centre for Media Pluralism and Media Freedom (EUI), <em>Media Pluralism Monitor 2024</em>, Institutul Universitar European, 2024.</li>
+  <li>Google Cloud, <em>Cloud Run Documentation</em>, https://cloud.google.com/run/docs, accesat 2025.</li>
+  <li>Google Cloud, <em>Vertex AI Pipelines Documentation</em>, https://cloud.google.com/vertex-ai/docs/pipelines, accesat 2025.</li>
+  <li>Oxford Internet Institute, <em>Computational Propaganda Research Project</em>, 2023.</li>
+  <li>Directiva (UE) 2019/790 a Parlamentului European și a Consiliului din 17 aprilie 2019 privind dreptul de autor și drepturile conexe pe piața unică digitală, Jurnalul Oficial al Uniunii Europene, L 130, 17.5.2019.</li>
+  <li>Regulamentul (UE) 2016/679 (GDPR) al Parlamentului European și al Consiliului din 27 aprilie 2016 privind protecția persoanelor fizice în ceea ce privește prelucrarea datelor cu caracter personal.</li>
+</ol>
+<hr class="section-sep" style="margin-top:40px"/>
+<p style="text-align:center;font-size:9pt;color:#5f6368;margin-top:20px">PropagandaLens — Documentație de Specificații al Proiectului — Cloud Computing 2025/2026</p>
+</div>
+</div><!-- end .page -->
+
+</body>
+</html>
